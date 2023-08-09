@@ -1,0 +1,8 @@
+﻿using Core.Domain.Entities;
+using Core.Persistence.Repositories;
+
+namespace Application.Services.Repositories;
+
+public interface I{{ entity.name | string.pascalcase }}Repository : IAsyncRepository<{{ entity.name | string.pascalcase }}, {{ entity.id_type }}>, IRepository<{{ entity.name | string.pascalcase }}, {{ entity.id_type }}>
+{
+}

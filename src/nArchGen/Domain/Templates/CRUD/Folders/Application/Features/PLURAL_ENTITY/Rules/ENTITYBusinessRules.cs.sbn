@@ -1,0 +1,34 @@
+﻿using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Constants;
+using Application.Services.Repositories;
+using Core.Application.Rules;
+using Core.CrossCuttingConcerns.Exceptions.Types;
+using Core.Domain.Entities;
+
+namespace Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Rules;
+
+public class {{ entity.name | string.pascalcase }}BusinessRules : BaseBusinessRules
+{
+    private readonly I{{ entity.name | string.pascalcase }}Repository _{{ entity.name | string.camelcase }}Repository;
+
+    public {{ entity.name | string.pascalcase }}BusinessRules(I{{ entity.name | string.pascalcase }}Repository {{ entity.name | string.camelcase }}Repository)
+    {
+        _{{ entity.name | string.camelcase }}Repository = {{ entity.name | string.camelcase }}Repository;
+    }
+
+    public Task {{ entity.name | string.pascalcase }}ShouldExistWhenSelected({{ entity.name | string.pascalcase }}? {{ entity.name | string.camelcase }})
+    {
+        if ({{ entity.name | string.camelcase }} == null)
+            throw new BusinessException({{ entity.name | string.pascalcase | string.plural }}BusinessMessages.{{ entity.name | string.pascalcase }}NotExists);
+        return Task.CompletedTask;
+    }
+
+    public async Task {{ entity.name | string.pascalcase }}IdShouldExistWhenSelected({{ entity.id_type }} id, CancellationToken cancellationToken)
+    {
+        {{ entity.name | string.pascalcase }}? {{ entity.name | string.camelcase }} = await _{{ entity.name | string.camelcase }}Repository.GetAsync(
+            predicate: {{ entity.name | string.abbreviation }} => {{ entity.name | string.abbreviation }}.Id == id,
+            enableTracking: false,
+            cancellationToken: cancellationToken
+        );
+        await {{ entity.name | string.pascalcase }}ShouldExistWhenSelected({{ entity.name | string.camelcase }});
+    }
+}
