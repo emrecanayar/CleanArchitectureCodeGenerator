@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Application;
+﻿using Application;
 using ConsoleUI.Commands.Generate.Command;
 using ConsoleUI.Commands.Generate.Crud;
 using ConsoleUI.Commands.Generate.Query;
@@ -7,6 +6,7 @@ using ConsoleUI.Commands.New;
 using Core.ConsoleUI.IoC.SpectreConsoleCli;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
+using System.Text;
 
 #region Console Configuration
 

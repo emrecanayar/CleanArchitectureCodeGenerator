@@ -10,16 +10,18 @@ public class CreateNewProjectCommand : IStreamRequest<CreatedNewProjectResponse>
 {
     public string ProjectName { get; set; }
     public bool IsThereSecurityMechanism { get; set; } = true;
+    public bool IsThereAdminProject { get; set; } = true;
 
     public CreateNewProjectCommand()
     {
         ProjectName = string.Empty;
     }
 
-    public CreateNewProjectCommand(string projectName, bool isThereSecurityMechanism)
+    public CreateNewProjectCommand(string projectName, bool isThereSecurityMechanism, bool isThereAdminProject)
     {
         ProjectName = projectName;
         IsThereSecurityMechanism = isThereSecurityMechanism;
+        IsThereAdminProject = isThereAdminProject;
     }
 
     public class CreateNewProjectCommandHandler
@@ -43,8 +45,28 @@ public class CreateNewProjectCommand : IStreamRequest<CreatedNewProjectResponse>
             response.CurrentStatusMessage = "Preparing project...";
             yield return response;
             await renameProject(request.ProjectName);
+
+            if (request.IsThereAdminProject)
+            {
+                await renameForAdminProject($"{request.ProjectName}");
+            }
+            else
+            {
+                await deleteForAdminProject($"{request.ProjectName}");
+            }
+
             if (!request.IsThereSecurityMechanism)
+            {
                 await removeSecurityMechanism(request.ProjectName);
+                if (request.IsThereAdminProject)
+                {
+                    await removeSecurityMechanismForAdminProject(request.ProjectName);
+                }
+            }
+
+
+
+
             response.LastOperationMessage =
                 $"Project has been prepared with {request.ProjectName.ToPascalCase()}.";
 
@@ -136,7 +158,57 @@ public class CreateNewProjectCommand : IStreamRequest<CreatedNewProjectResponse>
                 await File.WriteAllTextAsync(path, fileContent);
             }
         }
+        private async Task renameForAdminProject(string projectName)
+        {
 
+            Directory.SetCurrentDirectory($"./{projectName}");
+            string projectPath = $"{Environment.CurrentDirectory}/src/projects/{projectName}AdminProject";
+            Directory.Move(
+                sourceDirName: $"{Environment.CurrentDirectory}/src/projects/adminProject",
+                projectPath
+            );
+
+            await replaceFileContentWithProjectName(
+                path: $"{Environment.CurrentDirectory}/{projectName.ToPascalCase()}.sln",
+                search: "adminProject",
+                projectName: $"{projectName}AdminProject"
+            );
+
+            Directory.SetCurrentDirectory("../");
+
+            static async Task replaceFileContentWithProjectName(
+                string path,
+                string search,
+                string projectName
+            )
+            {
+                if (path.Contains(search))
+                {
+                    string newPath = path.Replace(search, projectName);
+                    Directory.Move(path, newPath);
+                    path = newPath;
+                }
+
+                string fileContent = await File.ReadAllTextAsync(path);
+                fileContent = fileContent.Replace(search, projectName);
+                await File.WriteAllTextAsync(path, fileContent);
+            }
+
+
+        }
+        private static async Task deleteForAdminProject(string projectName)
+        {
+            Directory.SetCurrentDirectory($"./{projectName}");
+            string solutionPath = $"{Environment.CurrentDirectory}/{projectName.ToPascalCase()}.sln";
+            string directoryToDelete = $"{Environment.CurrentDirectory}/src/projects/adminProject";
+            if (Directory.Exists(directoryToDelete))
+            {
+                Directory.Delete(directoryToDelete, true);
+            }
+
+            await RemoveProjectsFromSolutionAsync(solutionPath, new List<string> { "{8F30C7ED-8A79-4BD2-8413-CB62688F1636}", "{CF600D2A-BC95-4C87-9908-DA3F37DA5BE8}", "{1D50F0A7-8B27-44BD-97E1-B1C696D3E834}", "{3366F4DF-22C7-4542-BA19-6C7653F73C5D}", "{A120FD32-EB2D-4F6D-9AB7-8736B612DC9A}" });
+            Directory.SetCurrentDirectory("../");
+        }
         private async Task removeSecurityMechanism(string projectName)
         {
             string slnPath = $"{Environment.CurrentDirectory}/{projectName.ToPascalCase()}";
@@ -293,6 +365,174 @@ builder.Services.AddSwaggerGen(opt =>
 app.UseAuthorization();"
                 }
             );
+        }
+        private async Task removeSecurityMechanismForAdminProject(string projectName)
+        {
+            string slnPath = $"{Environment.CurrentDirectory}/{projectName.ToPascalCase()}";
+
+            string projectSourcePath = $"{slnPath}/src/projects/{projectName.ToCamelCase()}AdminProject";
+            string corePackagePath = $"{slnPath}/src/corePackages";
+
+            string[] dirsToDelete = new[]
+            {
+                $"{projectSourcePath}/webAPI.Application/Features/Auth",
+                $"{projectSourcePath}/webAPI.Application/Features/OperationClaims",
+                $"{projectSourcePath}/webAPI.Application/Features/UserOperationClaims",
+                $"{projectSourcePath}/webAPI.Application/Features/Users",
+                $"{projectSourcePath}/webAPI.Application/Services/AuthenticatorService",
+                $"{projectSourcePath}/webAPI.Application/Services/AuthService",
+                $"{projectSourcePath}/webAPI.Application/Services/OperationClaims",
+                $"{projectSourcePath}/webAPI.Application/Services/UserOperationClaims",
+                $"{projectSourcePath}/webAPI.Application/Services/UsersService",
+            };
+            foreach (string dirPath in dirsToDelete)
+                Directory.Delete(dirPath, recursive: true);
+
+            string[] filesToDelete = new[]
+            {
+                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IEmailAuthenticatorRepository.cs",
+                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IOperationClaimRepository.cs",
+                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IOtpAuthenticatorRepository.cs",
+                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IRefreshTokenRepository.cs",
+                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IUserOperationClaimRepository.cs",
+                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IUserRepository.cs",
+                $"{corePackagePath}/Core.Persistence/Configurations/EmailAuthenticatorConfiguration.cs",
+                $"{corePackagePath}/Core.Persistence/Configurations/OperationClaimConfiguration.cs",
+                $"{corePackagePath}/Core.Persistence/Configurations/OtpAuthenticatorConfiguration.cs",
+                $"{corePackagePath}/Core.Persistence/Configurations/RefreshTokenConfiguration.cs",
+                $"{corePackagePath}/Core.Persistence/Configurations/UserConfiguration.cs",
+                $"{corePackagePath}/Core.Persistence/Configurations/UserOperationClaimConfiguration.cs",
+                $"{projectSourcePath}/webAPI.Persistence/Repositories/EmailAuthenticatorRepository.cs",
+                $"{projectSourcePath}/webAPI.Persistence/Repositories/OperationClaimRepository.cs",
+                $"{projectSourcePath}/webAPI.Persistence/Repositories/OtpAuthenticatorRepository.cs",
+                $"{projectSourcePath}/webAPI.Persistence/Repositories/RefreshTokenRepository.cs",
+                $"{projectSourcePath}/webAPI.Persistence/Repositories/UserOperationClaimRepository.cs",
+                $"{projectSourcePath}/webAPI.Persistence/Repositories/UserRepository.cs",
+                $"{projectSourcePath}/webAPI/Controllers/AuthController.cs",
+                $"{projectSourcePath}/webAPI/Controllers/OperationClaimsController.cs",
+                $"{projectSourcePath}/webAPI/Controllers/UserOperationClaimsController.cs",
+                $"{projectSourcePath}/webAPI/Controllers/UsersController.cs",
+            };
+            foreach (string filePath in filesToDelete)
+                File.Delete(filePath);
+
+            await FileHelper.RemoveLinesAsync(
+              filePath: $"{projectSourcePath}/webAPI.Application/ApplicationServiceRegistration.cs",
+              predicate: line =>
+                  (
+                      new[]
+                      {
+                            "using Application.Services.AuthService;",
+                            "services.AddScopedWithManagers(typeof(IAuthService).Assembly);",
+                      }
+                  ).Any(line.Contains)
+          );
+
+
+            await FileHelper.RemoveContentAsync(
+                filePath: $"{projectSourcePath}/webAPI/Program.cs",
+                contents: new[]
+                {
+                    "using Core.Security;",
+                    "using Core.Security.Encryption;",
+                    "using Core.Security.JWT;",
+                    "using Core.WebAPI.Extensions.Swagger;",
+                    "using Microsoft.AspNetCore.Authentication.JwtBearer;",
+                    "using Microsoft.IdentityModel.Tokens;",
+                    "using Microsoft.OpenApi.Models;",
+                    "using System.Reflection;",
+                    "using Swashbuckle.AspNetCore.SwaggerGen;",
+                    "using Core.Utilities.ApiDoc;",
+                    "using Core.Utilities.Messages;",
+                    "builder.Services.AddSecurityServices();",
+                    @"TokenOptions? tokenOptions = builder.Configuration.GetSection(""TokenOptions"").Get<TokenOptions>();
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidIssuer = tokenOptions.Issuer,
+        ValidAudience = tokenOptions.Audience,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = SecurityKeyHelper.CreateSecurityKey(tokenOptions.SecurityKey)
+    };
+});
+
+builder.Services.AddSwaggerGen(opt =>
+{
+    opt.CustomSchemaIds(type => type.ToString());
+    opt.SwaggerDoc(ProjectSwaggerMessages.Version, new OpenApiInfo
+    {
+        Version = ProjectSwaggerMessages.Version,
+        Title = ProjectSwaggerMessages.Title,
+        Description = ProjectSwaggerMessages.Description
+    });
+    opt.CustomOperationIds(apiDesc =>
+    {
+        return apiDesc.TryGetMethodInfo(out MethodInfo methodInfo)
+            ? $""{methodInfo.DeclaringType.Name}.{methodInfo.Name}""
+            : new Guid().ToString();
+    });
+    opt.AddSecurityDefinition(""Bearer"", new OpenApiSecurityScheme
+    {
+        Name = ""Authorization"",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = ""Bearer"",
+        BearerFormat = ""JWT"",
+        In = ParameterLocation.Header,
+        Description =
+            ""JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \""Bearer 12345.54321\""""
+    });
+
+    opt.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+                { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = ""Bearer"" } },
+            new string[] { }
+        }
+    });
+    opt.OperationFilter<AddAuthHeaderOperationFilter>();
+    var xmlFile = $""{Assembly.GetExecutingAssembly().GetName().Name}.xml"";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    opt.IncludeXmlComments(xmlPath);
+});",
+@"app.UseAuthentication();
+app.UseAuthorization();"
+                }
+            );
+        }
+        private static async Task RemoveProjectsFromSolutionAsync(string solutionFilePath, List<string> projectGuidsToRemove)
+        {
+            string[] solutionLines = await File.ReadAllLinesAsync(solutionFilePath);
+            List<string> newSolutionLines = new List<string>();
+
+            bool shouldRemoveCurrentSection = false;
+            foreach (string line in solutionLines)
+            {
+                if (line.StartsWith("Project("))
+                {
+                    shouldRemoveCurrentSection = projectGuidsToRemove.Any(guid => line.Contains(guid));
+                }
+
+                if (!shouldRemoveCurrentSection)
+                {
+                    newSolutionLines.Add(line);
+                }
+
+                if (line.StartsWith("EndProject"))
+                {
+                    shouldRemoveCurrentSection = false;
+                }
+            }
+
+            await File.WriteAllLinesAsync(solutionFilePath, newSolutionLines);
         }
     }
 }

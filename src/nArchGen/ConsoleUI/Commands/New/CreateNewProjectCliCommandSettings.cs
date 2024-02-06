@@ -13,6 +13,10 @@ public partial class CreateNewProjectCliCommand
         [CommandOption("--no-security")]
         public bool IsThereSecurityMechanism { get; set; }
 
+        [CommandOption("--no-admin")]
+        public bool IsThereAdminProject { get; set; }
+
+
         public void CheckProjectNameArgument()
         {
             if (ProjectName != null)
@@ -30,6 +34,16 @@ public partial class CreateNewProjectCliCommand
                 return;
             IsThereSecurityMechanism = AnsiConsole.Confirm(
                 prompt: "Do you want to add security mechanism to your project?",
+                defaultValue: true
+            );
+        }
+
+        public void CheckIsThereAdminProjectArgument()
+        {
+            if (IsThereAdminProject)
+                return;
+            IsThereAdminProject = AnsiConsole.Confirm(
+                prompt: "Do you want to add admin project to your project?",
                 defaultValue: true
             );
         }

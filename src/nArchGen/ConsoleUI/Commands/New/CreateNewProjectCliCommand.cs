@@ -18,11 +18,14 @@ public partial class CreateNewProjectCliCommand : AsyncCommand<CreateNewProjectC
     {
         settings.CheckProjectNameArgument();
         settings.CheckIsThereSecurityMechanismArgument();
+        settings.CheckIsThereAdminProjectArgument();
 
         CreateNewProjectCommand request =
             new(
                 projectName: settings.ProjectName!,
-                isThereSecurityMechanism: settings.IsThereSecurityMechanism
+                isThereSecurityMechanism: settings.IsThereSecurityMechanism,
+                isThereAdminProject: settings.IsThereAdminProject
+
             );
 
         IAsyncEnumerable<CreatedNewProjectResponse> resultsStream = _mediator.CreateStream(request);
