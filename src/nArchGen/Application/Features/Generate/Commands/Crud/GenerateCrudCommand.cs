@@ -36,6 +36,8 @@ public class GenerateCrudCommand : IStreamRequest<GeneratedCrudResponse>
             [EnumeratorCancellation] CancellationToken cancellationToken
         )
         {
+            bool isAdminProject = request.ProjectName.Contains("Admin");
+
             await _businessRules.EntityClassShouldBeInhreitEntityBaseClass(
                 request.ProjectPath,
                 request.CrudTemplateData.Entity.Name
@@ -45,48 +47,86 @@ public class GenerateCrudCommand : IStreamRequest<GeneratedCrudResponse>
             List<string> newFilePaths = new();
             List<string> updatedFilePaths = new();
 
-            response.CurrentStatusMessage =
+
+            if (!isAdminProject)
+            {
+                response.CurrentStatusMessage =
                 $"Adding {request.CrudTemplateData.Entity.Name} entity to BaseContext.";
-            yield return response;
+                yield return response;
+                updatedFilePaths.Add(
+               await injectEntityToContext(request.ProjectPath, request.CrudTemplateData));
+                response.LastOperationMessage =
+                    $"{request.CrudTemplateData.Entity.Name} has been added to BaseContext.";
+                yield return response;
+                response.CurrentStatusMessage = "Generating Persistence layer codes...";
+                yield return response;
+                newFilePaths.AddRange(
+                    await generatePersistenceCodes(request.ProjectPath, request.ProjectName, request.CrudTemplateData)
+                );
+                response.LastOperationMessage = "Persistence layer codes have been generated.";
 
-            updatedFilePaths.Add(
-                await injectEntityToContext(request.ProjectPath, request.CrudTemplateData)
-            );
-            response.LastOperationMessage =
-                $"{request.CrudTemplateData.Entity.Name} has been added to BaseContext.";
-            yield return response;
+                response.CurrentStatusMessage = "Generating Application layer codes...";
+                yield return response;
 
-            response.CurrentStatusMessage = "Generating Persistence layer codes...";
-            yield return response;
-            newFilePaths.AddRange(
-                await generatePersistenceCodes(request.ProjectPath, request.ProjectName, request.CrudTemplateData)
-            );
-            response.LastOperationMessage = "Persistence layer codes have been generated.";
+                newFilePaths.AddRange(
+                    await generateApplicationCodes(request.ProjectPath, request.ProjectName, request.CrudTemplateData)
+                );
+                response.LastOperationMessage = "Application layer codes have been generated.";
+                yield return response;
 
-            response.CurrentStatusMessage = "Generating Application layer codes...";
-            yield return response;
+                response.CurrentStatusMessage = "Adding service registrations...";
+                yield return response;
 
-            newFilePaths.AddRange(
-                await generateApplicationCodes(request.ProjectPath, request.ProjectName, request.CrudTemplateData)
-            );
-            response.LastOperationMessage = "Application layer codes have been generated.";
-            yield return response;
+                response.CurrentStatusMessage = "Generating WebAPI layer codes...";
+                yield return response;
+                newFilePaths.AddRange(
+                    await generateWebApiCodes(request.ProjectPath, request.ProjectName, request.CrudTemplateData)
+                );
+                response.LastOperationMessage = "WebAPI layer codes have been generated.";
+                yield return response;
 
-            response.CurrentStatusMessage = "Adding service registrations...";
-            yield return response;
+                response.CurrentStatusMessage = "Completed.";
+                response.NewFilePathsResult = newFilePaths;
+                response.UpdatedFilePathsResult = updatedFilePaths;
+                yield return response;
+            }
+            else
+            {
+                response.CurrentStatusMessage = "Generating Persistence layer codes...";
+                yield return response;
+                newFilePaths.AddRange(
+                    await generateAdminPersistenceCodes(request.ProjectPath, request.ProjectName, request.CrudTemplateData)
+                );
+                response.LastOperationMessage = "Persistence layer codes have been generated.";
 
-            response.CurrentStatusMessage = "Generating WebAPI layer codes...";
-            yield return response;
-            newFilePaths.AddRange(
-                await generateWebApiCodes(request.ProjectPath, request.ProjectName, request.CrudTemplateData)
-            );
-            response.LastOperationMessage = "WebAPI layer codes have been generated.";
-            yield return response;
+                response.CurrentStatusMessage = "Generating Application layer codes...";
+                yield return response;
 
-            response.CurrentStatusMessage = "Completed.";
-            response.NewFilePathsResult = newFilePaths;
-            response.UpdatedFilePathsResult = updatedFilePaths;
-            yield return response;
+                newFilePaths.AddRange(
+                    await generateAdminApplicationCodes(request.ProjectPath, request.ProjectName, request.CrudTemplateData)
+                );
+                response.LastOperationMessage = "Application layer codes have been generated.";
+                yield return response;
+
+                response.CurrentStatusMessage = "Adding service registrations...";
+                yield return response;
+
+                response.CurrentStatusMessage = "Generating WebAPI layer codes...";
+                yield return response;
+                newFilePaths.AddRange(
+                    await generateAdminWebApiCodes(request.ProjectPath, request.ProjectName, request.CrudTemplateData)
+                );
+                response.LastOperationMessage = "WebAPI layer codes have been generated.";
+                yield return response;
+
+                response.CurrentStatusMessage = "Completed.";
+                response.NewFilePathsResult = newFilePaths;
+                response.UpdatedFilePathsResult = updatedFilePaths;
+                yield return response;
+            }
+
+
+
         }
 
         private async Task<string> injectEntityToContext(
@@ -132,11 +172,49 @@ public class GenerateCrudCommand : IStreamRequest<GeneratedCrudResponse>
               crudTemplateData);
         }
 
+        private async Task<ICollection<string>> generateAdminPersistenceCodes(
+       string projectPath,
+       string projectName,
+       CrudTemplateData crudTemplateData
+   )
+        {
+            string templateRepositoryDir =
+                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Crud}\Folders\Persistence\Repositories";
+
+            projectPath =
+               projectPath.Replace("corePackages", "projects").Replace("Core.Domain\\Entities", projectName);
+
+            return await generateFolderCodes(
+              templateRepositoryDir,
+              outputDir: $@"{projectPath}\webAPI.Persistence\Repositories",
+              crudTemplateData);
+        }
+
         private async Task<ICollection<string>> generateApplicationCodes(
             string projectPath,
             string projectName,
             CrudTemplateData crudTemplateData
         )
+        {
+
+            string templateDir =
+                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Crud}\Folders\Application";
+
+            projectPath = projectPath.Replace("corePackages", "projects").Replace("Core.Domain\\Entities", projectName);
+
+
+            return await generateFolderCodes(
+                templateDir,
+                outputDir: $@"{projectPath}\webAPI.Application",
+                crudTemplateData
+            );
+        }
+
+        private async Task<ICollection<string>> generateAdminApplicationCodes(
+           string projectPath,
+           string projectName,
+           CrudTemplateData crudTemplateData
+       )
         {
 
             string templateDir =
@@ -171,11 +249,58 @@ public class GenerateCrudCommand : IStreamRequest<GeneratedCrudResponse>
             );
         }
 
+        private async Task<ICollection<string>> generateAdminWebApiCodes(
+            string projectPath,
+            string projectName,
+            CrudTemplateData crudTemplateData
+        )
+        {
+            string templateDir =
+                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Crud}\Folders\WebAPI";
+
+            projectPath = projectPath.Replace("corePackages", "projects").Replace("Core.Domain\\Entities", projectName);
+
+            return await generateFolderCodes(
+                templateDir,
+                outputDir: $@"{projectPath}\webAPI",
+                crudTemplateData
+            );
+        }
+
+
         private async Task<ICollection<string>> generateFolderCodes(
             string templateDir,
             string outputDir,
             CrudTemplateData crudTemplateData
         )
+        {
+            var templateFilePaths = DirectoryHelper
+                .GetFilesInDirectoryTree(
+                    templateDir,
+                    searchPattern: $"*.{_templateEngine.TemplateExtension}"
+                )
+                .ToList();
+            Dictionary<string, string> replacePathVariable =
+                new()
+                {
+                    { "PLURAL_ENTITY", "{{ entity.name | string.pascalcase | string.plural }}" },
+                    { "ENTITY", "{{ entity.name | string.pascalcase }}" }
+                };
+            ICollection<string> newRenderedFilePaths = await _templateEngine.RenderFileAsync(
+                templateFilePaths,
+                templateDir,
+                replacePathVariable,
+                outputDir,
+                crudTemplateData
+            );
+            return newRenderedFilePaths;
+        }
+
+        private async Task<ICollection<string>> generateAdminFolderCodes(
+       string templateDir,
+       string outputDir,
+       CrudTemplateData crudTemplateData
+   )
         {
             var templateFilePaths = DirectoryHelper
                 .GetFilesInDirectoryTree(
