@@ -1,7 +1,5 @@
-﻿using System.Globalization;
+﻿using Core.CodeGen.Code.CSharp.ValueObjects;
 using System.Text.RegularExpressions;
-using Core.CodeGen.Code.CSharp.ValueObjects;
-using Core.CodeGen.File;
 
 namespace Core.CodeGen.Code.CSharp;
 
@@ -47,73 +45,41 @@ public static class CSharpCodeReader
     }
 
     public static async Task<ICollection<PropertyInfo>> ReadClassPropertiesAsync(
-        string filePath,
-        string projectPath
-    )
+     string filePath,
+     string projectPath
+ )
     {
         string fileContent = await System.IO.File.ReadAllTextAsync(filePath);
-        Regex propertyRegex =
-            new(
-                @"(public|protected|internal|protected internal|private protected|private)?\s+(?:const|static)?\s*((?:\w\.?)+\??)\s+(\w+)\s*\{.*\}"
-            );
-        Regex builtInTypeRegex =
-            new(
-                pattern: @"^(bool|byte|sbyte|char|decimal|double|float|int|uint|long|ulong|object|short|ushort|string)$",
-                RegexOptions.IgnoreCase
-            );
+        Regex propertyRegex = new(
+            @"(public|protected|internal|protected internal|private protected|private)?\s+(?:const|static)?\s*((?:\w+\.?)+\??)\s+(\w+)\s*\{.*\}"
+        );
+        Regex builtInTypeRegex = new(
+            @"^(bool|byte|sbyte|char|decimal|double|float|int|uint|long|ulong|object|short|ushort|string|DateTime|Guid)$",
+            RegexOptions.IgnoreCase
+        );
 
         MatchCollection matches = propertyRegex.Matches(fileContent);
         List<PropertyInfo> result = new();
         foreach (Match match in matches)
         {
-            string accessModifier = match.Groups[1].Value.Trim();
             string type = match.Groups[2].Value;
-            string typeName = type.Replace(oldValue: "?", string.Empty);
-            string name = match.Groups[3].Value;
-            string? nameSpace = null;
+            string typeName = type.Replace("?", string.Empty);
+
             if (!builtInTypeRegex.IsMatch(typeName))
             {
-                ICollection<string> potentialPropertyTypeFilePaths =
-                    DirectoryHelper.GetFilesInDirectoryTree(
-                        projectPath,
-                        searchPattern: $"{typeName}.cs"
-                    );
-                ICollection<string> usingNameSpacesInFile = await ReadUsingNameSpacesAsync(
-                    filePath
-                );
-                foreach (string potentialPropertyTypeFilePath in potentialPropertyTypeFilePaths)
-                {
-                    string potentialPropertyNameSpace = string.Join(
-                        separator: '.',
-                        values: potentialPropertyTypeFilePath
-                            .Replace(projectPath, string.Empty)
-                            .Replace(oldChar: '\\', newChar: '.')
-                            .Replace(oldValue: $".{typeName}.cs", string.Empty)
-                            .Substring(1)
-                            .Split('.')
-                            .Select(
-                                part =>
-                                    char.ToUpper(part[0], CultureInfo.GetCultureInfo("en-EN"))
-                                    + part[1..]
-                            )
-                    );
-                    if (!usingNameSpacesInFile.Contains(potentialPropertyNameSpace))
-                        continue;
-                    nameSpace = potentialPropertyNameSpace;
-                    break;
-                }
+                continue;
             }
 
-            PropertyInfo propertyInfo =
-                new()
-                {
-                    AccessModifier = string.IsNullOrEmpty(accessModifier)
-                        ? "private"
-                        : accessModifier,
-                    Type = type,
-                    Name = name,
-                    NameSpace = nameSpace
-                };
+            string accessModifier = match.Groups[1].Value.Trim();
+            string name = match.Groups[3].Value;
+
+            PropertyInfo propertyInfo = new()
+            {
+                AccessModifier = string.IsNullOrEmpty(accessModifier) ? "private" : accessModifier,
+                Type = type,
+                Name = name,
+                NameSpace = null
+            };
             result.Add(propertyInfo);
         }
 
