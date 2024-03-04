@@ -44,47 +44,46 @@ public static class CSharpCodeReader
         return genericArguments.Select(genericArgument => genericArgument.Trim()).ToArray();
     }
 
-    public static async Task<ICollection<PropertyInfo>> ReadClassPropertiesAsync(
-     string filePath,
-     string projectPath
- )
+    public static async Task<ICollection<PropertyInfo>> ReadClassPropertiesAsync(string filePath, string projectPath)
     {
         string fileContent = await System.IO.File.ReadAllTextAsync(filePath);
-        Regex propertyRegex = new(
-            @"(public|protected|internal|protected internal|private protected|private)?\s+(?:const|static)?\s*((?:\w+\.?)+\??)\s+(\w+)\s*\{.*\}"
-        );
-        Regex builtInTypeRegex = new(
+
+        Regex propertyRegex = new Regex(
+            @"(\bpublic\b|\bprotected\b|\binternal\b|\bprivate\b)\s+(static\s+)?((?:[\w]+)\??)\s+(\w+)\s*{",
+            RegexOptions.Compiled | RegexOptions.Singleline);
+
+        Regex builtInTypeRegex = new Regex(
             @"^(bool|byte|sbyte|char|decimal|double|float|int|uint|long|ulong|object|short|ushort|string|DateTime|Guid)$",
-            RegexOptions.IgnoreCase
-        );
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        MatchCollection matches = propertyRegex.Matches(fileContent);
-        List<PropertyInfo> result = new();
-        foreach (Match match in matches)
+        List<PropertyInfo> result = new List<PropertyInfo>();
+
+        foreach (Match match in propertyRegex.Matches(fileContent))
         {
-            string type = match.Groups[2].Value;
-            string typeName = type.Replace("?", string.Empty);
+            string accessModifier = match.Groups[1].Value;
+            string type = match.Groups[3].Value;
+            string name = match.Groups[4].Value;
 
-            if (!builtInTypeRegex.IsMatch(typeName))
+            if (!builtInTypeRegex.IsMatch(type))
             {
-                continue;
+                continue; // Yerleşik tip değilse, bu özelliği atla
             }
 
-            string accessModifier = match.Groups[1].Value.Trim();
-            string name = match.Groups[3].Value;
-
-            PropertyInfo propertyInfo = new()
+            PropertyInfo propertyInfo = new PropertyInfo
             {
-                AccessModifier = string.IsNullOrEmpty(accessModifier) ? "private" : accessModifier,
+                AccessModifier = accessModifier,
                 Type = type,
                 Name = name,
-                NameSpace = null
+                NameSpace = null // Örnek sınırları nedeniyle namespace bilgisi eklenmemiştir
             };
+
             result.Add(propertyInfo);
         }
 
         return result;
     }
+
+
 
     public static async Task<ICollection<string>> ReadUsingNameSpacesAsync(string filePath)
     {
