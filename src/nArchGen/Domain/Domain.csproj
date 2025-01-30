@@ -7,10 +7,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Folder Include="Templates\Crud\Folders\" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<ContentWithTargetPath Include="Templates\**">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<TargetPath>Templates\%(RecursiveDir)\%(Filename)%(Extension)</TargetPath>

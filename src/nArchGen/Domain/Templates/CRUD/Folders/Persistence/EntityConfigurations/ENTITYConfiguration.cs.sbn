@@ -11,7 +11,7 @@ public class {{ entity.name | string.pascalcase }}Configuration : BaseConfigurat
     base.Configure(builder);
     builder.ToTable("{{ entity.name | string.pascalcase | string.plural }}");
     {{ for propertyItem in entity.properties }}
-    builder.Property({{ entity.name | string.abbreviation }} => {{ entity.name | string.abbreviation }}.{{ propertyItem.name }}).IsRequired(true).HasColumnName("{{ propertyItem.name }}").HasMaxLength(250);
+    builder.Property({{ entity.name | string.abbreviation }} => {{ entity.name | string.abbreviation }}.{{ propertyItem.name }}).IsRequired(true).HasColumnName("{{ propertyItem.name }}");
     {{ end }}   
     }
 }

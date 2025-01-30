@@ -2,6 +2,7 @@
 using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Commands.Delete;
 using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Commands.Update;
 using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetById;
+using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetToList;
 using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetList;
 using Core.Application.Requests;
 using Core.Application.Responses;
@@ -43,6 +44,13 @@ public class {{ entity.name | string.pascalcase | string.plural }}Controller : B
     public async Task<IActionResult> GetById([FromRoute] {{ entity.id_type }} id)
     {
         CustomResponseDto<GetById{{ entity.name | string.pascalcase }}Response> response = await Mediator.Send(new GetById{{ entity.name | string.pascalcase }}Query { Id = id });
+        return Ok(response);
+    }
+    
+    [HttpGet("GetToList")]
+    public async Task<IActionResult> GetToList()
+    {
+        CustomResponseDto<List<GetToList{{ entity.name | string.pascalcase }}Response>> response = await Mediator.Send(new GetToList{{ entity.name | string.pascalcase }}Query { });
         return Ok(response);
     }
 

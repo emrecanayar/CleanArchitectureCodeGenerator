@@ -1,0 +1,41 @@
+﻿{{ if is_secured_operation_used }}using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Constants;
+{{ end }}using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Rules;
+using Application.Services.Repositories;
+using AutoMapper;
+using Core.Application.ResponseTypes.Concrete;
+using System.Net;
+using Core.Domain.Entities;{{ if is_secured_operation_used }}
+using Core.Application.Pipelines.Authorization;{{ end }}
+using MediatR;{{ if is_secured_operation_used }}
+using static Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Constants.{{ entity.name | string.pascalcase | string.plural }}OperationClaims;{{ end }}
+
+namespace Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetToList;
+
+public class GetToList{{ entity.name | string.pascalcase }}Query : IRequest<CustomResponseDto<List<GetToList{{ entity.name | string.pascalcase }}Response>>>{{ if is_secured_operation_used }}, ISecuredRequest{{ end }}
+{
+
+    public string[] Roles => new[] { Admin, Read };{{ end }}
+
+    public class GetToList{{ entity.name | string.pascalcase }}QueryHandler : IRequestHandler<GetToList{{ entity.name | string.pascalcase }}Query, CustomResponseDto<List<GetToList{{ entity.name | string.pascalcase }}Response>>>
+    {
+        private readonly IMapper _mapper;
+        private readonly I{{ entity.name | string.pascalcase }}Repository _{{ entity.name | string.camelcase }}Repository;
+        private readonly {{ entity.name | string.pascalcase }}BusinessRules _{{ entity.name | string.camelcase }}BusinessRules;
+
+        public GetToList{{ entity.name | string.pascalcase }}QueryHandler(IMapper mapper, I{{ entity.name | string.pascalcase }}Repository {{ entity.name | string.camelcase }}Repository, {{ entity.name | string.pascalcase }}BusinessRules {{ entity.name | string.camelcase }}BusinessRules)
+        {
+            _mapper = mapper;
+            _{{ entity.name | string.camelcase }}Repository = {{ entity.name | string.camelcase }}Repository;
+            _{{ entity.name | string.camelcase }}BusinessRules = {{ entity.name | string.camelcase }}BusinessRules;
+        }
+
+        public async Task<CustomResponseDto<List<GetToList{{ entity.name | string.pascalcase }}Response>>> Handle(GetToList{{ entity.name | string.pascalcase }}Query request, CancellationToken cancellationToken)
+        {
+            IList<{{ entity.name | string.pascalcase }}> {{ entity.name | string.camelcase | string.plural }} = await _{{ entity.name | string.camelcase }}Repository.GetToListAsync(cancellationToken: cancellationToken);
+
+            List<GetToList{{ entity.name | string.pascalcase }}Response> response = _mapper.Map<List<GetToList{{ entity.name | string.pascalcase }}Response>>({{ entity.name | string.camelcase | string.plural }});
+
+          return CustomResponseDto<List<GetToList{{ entity.name | string.pascalcase }}Response>>.Success((int)HttpStatusCode.OK, response, true);
+        }
+    }
+}
