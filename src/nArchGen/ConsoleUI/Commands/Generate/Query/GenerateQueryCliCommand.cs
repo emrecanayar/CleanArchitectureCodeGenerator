@@ -15,6 +15,7 @@ public partial class GenerateQueryCliCommand : AsyncCommand<GenerateQueryCliComm
         _mediator = mediator ?? throw new ArgumentNullException(paramName: nameof(mediator));
     }
 
+
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
         settings.CheckProjectsArgument();
@@ -44,10 +45,10 @@ public partial class GenerateQueryCliCommand : AsyncCommand<GenerateQueryCliComm
         await AnsiConsole
             .Status()
             .Spinner(Spinner.Known.Dots2)
-            .SpinnerStyle(style: Style.Parse(text: "blue"))
+            .SpinnerStyle(style: Style.Parse("blue"))
             .StartAsync(
-                status: "Generating...",
-                action: async ctx =>
+                "Generating...",
+                async ctx =>
                 {
                     await foreach (GeneratedQueryResponse result in resultsStream)
                     {
@@ -57,9 +58,7 @@ public partial class GenerateQueryCliCommand : AsyncCommand<GenerateQueryCliComm
                             AnsiConsole.MarkupLine(result.OutputMessage);
 
                         if (result.LastOperationMessage is not null)
-                            AnsiConsole.MarkupLine(
-                                $":check_mark_button: {result.LastOperationMessage}"
-                            );
+                            AnsiConsole.MarkupLine($":check_mark_button: {result.LastOperationMessage}");
 
                         if (result.NewFilePathsResult is not null)
                         {
