@@ -8,21 +8,20 @@ namespace Application.Features.Generate.Rules;
 
 public class GenerateBusinessRules
 {
-    public async Task EntityClassShouldBeInhreitEntityBaseClass(
-        string projectPath,
-        string entityName
-    )
+    public async Task EntityClassShouldBeInheritEntityBaseClass(
+             string projectPath,
+             string entityName
+         )
     {
-        string[] fileContent = await File.ReadAllLinesAsync(
-            $"{projectPath}/{entityName}.cs"
-        );
+        string entityFilePath = Path.Combine(projectPath, $"{entityName}.cs");
+        string[] fileContent = await File.ReadAllLinesAsync(entityFilePath);
 
         string entityBaseClassNameSpaceUsingTemplate = await File.ReadAllTextAsync(
-            $"{DirectoryHelper.AssemblyDirectory}/{Templates.Paths.Crud}/Lines/EntityBaseClassNameSpaceUsing.cs.sbn"
+            Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Crud, "Lines", "EntityBaseClassNameSpaceUsing.cs.sbn")
         );
-        Regex entityBaseClassRegex = new(@$"public\s+class\s+{entityName}\s*:\s*Entity\s*");
+        Regex entityBaseClassRegex = new($"public\\s+class\\s+{entityName}\\s*:\\s*Entity\\s*");
         bool isExists =
-            fileContent.Any(line => line == entityBaseClassNameSpaceUsingTemplate)
+            fileContent.Any(line => line.Trim() == entityBaseClassNameSpaceUsingTemplate.Trim())
             && fileContent.Any(entityBaseClassRegex.IsMatch);
 
         if (!isExists)
@@ -33,7 +32,7 @@ public class GenerateBusinessRules
 
     public Task FileShouldNotBeExists(string filePath)
     {
-        if (Directory.Exists(filePath))
+        if (File.Exists(filePath))
             throw new BusinessException(GenerateBusinessMessages.FileAlreadyExists(filePath));
         return Task.CompletedTask;
     }
