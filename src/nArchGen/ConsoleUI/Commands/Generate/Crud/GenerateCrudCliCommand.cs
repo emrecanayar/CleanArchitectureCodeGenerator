@@ -25,7 +25,7 @@ public partial class GenerateCrudCliCommand : AsyncCommand<GenerateCrudCliComman
         settings.CheckProjectsArgument();
         settings.CheckMechanismOptions();
 
-        string entityPath = @$"{settings.ProjectPath}\{settings.EntityName}.cs";
+        string entityPath = Path.Combine(settings.ProjectPath, $"{settings.EntityName}.cs");
         ICollection<PropertyInfo> entityProperties =
             await CSharpCodeReader.ReadClassPropertiesAsync(entityPath, settings.ProjectPath);
         string entityIdType = (
