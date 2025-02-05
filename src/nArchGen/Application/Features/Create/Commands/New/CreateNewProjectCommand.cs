@@ -38,43 +38,40 @@ public class CreateNewProjectCommand : IStreamRequest<CreatedNewProjectResponse>
             response.CurrentStatusMessage = "Cloning starter project and core packages...";
             yield return response;
             response.OutputMessage = null;
-            await cloneCorePackagesAndStarterProject(request.ProjectName);
+            await CloneCorePackagesAndStarterProject(request.ProjectName);
             response.LastOperationMessage =
                 "Starter project has been cloned from 'https://github.com/emrecanayar/CleanArchitectureTemplate.git'.";
 
             response.CurrentStatusMessage = "Preparing project...";
             yield return response;
-            await renameProject(request.ProjectName);
+            await RenameProject(request.ProjectName);
 
             if (request.IsThereAdminProject)
             {
-                await renameForAdminProject($"{request.ProjectName}");
+                await RenameForAdminProject($"{request.ProjectName}");
             }
             else
             {
-                await deleteForAdminProject($"{request.ProjectName}");
+                await DeleteForAdminProject($"{request.ProjectName}");
             }
 
             if (!request.IsThereSecurityMechanism)
             {
-                await removeSecurityMechanism(request.ProjectName);
+                await RemoveSecurityMechanism(request.ProjectName);
                 if (request.IsThereAdminProject)
                 {
-                    await removeSecurityMechanismForAdminProject(request.ProjectName);
+                    await RemoveSecurityMechanismForAdminProject(request.ProjectName);
                 }
             }
-
-
-
 
             response.LastOperationMessage =
                 $"Project has been prepared with {request.ProjectName.ToPascalCase()}.";
 
             DirectoryHelper.DeleteDirectory(
-                $"{Environment.CurrentDirectory}/{request.ProjectName}/.git"
+                Path.Combine(Environment.CurrentDirectory, request.ProjectName, ".git")
             );
             ICollection<string> newFiles = DirectoryHelper.GetFilesInDirectoryTree(
-                root: $"{Environment.CurrentDirectory}/{request.ProjectName}",
+                root: Path.Combine(Environment.CurrentDirectory, request.ProjectName),
                 searchPattern: "*"
             );
 
@@ -89,58 +86,58 @@ public class CreateNewProjectCommand : IStreamRequest<CreatedNewProjectResponse>
             yield return response;
         }
 
-        private async Task cloneCorePackagesAndStarterProject(string projectName) =>
+        private async Task CloneCorePackagesAndStarterProject(string projectName) =>
             await GitCommandHelper.RunAsync(
-                $"clone https://github.com/emrecanayar/CleanArchitectureTemplate.git ./{projectName}"
+                $"clone https://github.com/emrecanayar/CleanArchitectureTemplate.git {Path.Combine(".", projectName)}"
             );
 
-        private async Task renameProject(string projectName)
+        private async Task RenameProject(string projectName)
         {
-            Directory.SetCurrentDirectory($"./{projectName}");
+            Directory.SetCurrentDirectory(Path.Combine(".", projectName));
 
-            await replaceFileContentWithProjectName(
-                path: $"{Environment.CurrentDirectory}/CleanArchitectureTemplate.sln",
+            await ReplaceFileContentWithProjectName(
+                path: Path.Combine(Environment.CurrentDirectory, "CleanArchitectureTemplate.sln"),
                 search: "CleanArchitectureTemplate",
                 projectName: projectName.ToPascalCase()
             );
-            await replaceFileContentWithProjectName(
-                path: $"{Environment.CurrentDirectory}/CleanArchitectureTemplate.sln.DotSettings",
+            await ReplaceFileContentWithProjectName(
+                path: Path.Combine(Environment.CurrentDirectory, "CleanArchitectureTemplate.sln.DotSettings"),
                 search: "CleanArchitectureTemplate",
                 projectName: projectName.ToPascalCase()
             );
 
-            string projectPath = $"{Environment.CurrentDirectory}/src/projects/{projectName.ToCamelCase()}";
+            string projectPath = Path.Combine(Environment.CurrentDirectory, "src", "projects", projectName.ToCamelCase());
             Directory.Move(
-                sourceDirName: $"{Environment.CurrentDirectory}/src/projects/starterProject",
-                projectPath
+                sourceDirName: Path.Combine(Environment.CurrentDirectory, "src", "projects", "starterProject"),
+                destDirName: projectPath
             );
 
-            await replaceFileContentWithProjectName(
-                path: $"{Environment.CurrentDirectory}/{projectName.ToPascalCase()}.sln",
+            await ReplaceFileContentWithProjectName(
+                path: Path.Combine(Environment.CurrentDirectory, $"{projectName.ToPascalCase()}.sln"),
                 search: "starterProject",
                 projectName: projectName.ToCamelCase()
             );
 
-            await replaceFileContentWithProjectName(
-                path: $"{Environment.CurrentDirectory}/tests/Application.Tests/Application.Tests.csproj",
+            await ReplaceFileContentWithProjectName(
+                path: Path.Combine(Environment.CurrentDirectory, "tests", "Application.Tests", "Application.Tests.csproj"),
                 search: "starterProject",
                 projectName: projectName.ToCamelCase()
             );
 
-            await replaceFileContentWithProjectName(
-                path: $"{projectPath}/webAPI/appsettings.json",
+            await ReplaceFileContentWithProjectName(
+                path: Path.Combine(projectPath, "webAPI", "appsettings.json"),
                 search: "StarterProject",
                 projectName: projectName.ToPascalCase()
             );
-            await replaceFileContentWithProjectName(
-                path: $"{projectPath}/webAPI/appsettings.json",
+            await ReplaceFileContentWithProjectName(
+                path: Path.Combine(projectPath, "webAPI", "appsettings.json"),
                 search: "starterProject",
                 projectName: projectName.ToCamelCase()
             );
 
             Directory.SetCurrentDirectory("../");
 
-            static async Task replaceFileContentWithProjectName(
+            static async Task ReplaceFileContentWithProjectName(
                 string path,
                 string search,
                 string projectName
@@ -158,25 +155,25 @@ public class CreateNewProjectCommand : IStreamRequest<CreatedNewProjectResponse>
                 await File.WriteAllTextAsync(path, fileContent);
             }
         }
-        private async Task renameForAdminProject(string projectName)
-        {
 
-            Directory.SetCurrentDirectory($"./{projectName}");
-            string projectPath = $"{Environment.CurrentDirectory}/src/projects/{projectName}AdminProject";
+        private async Task RenameForAdminProject(string projectName)
+        {
+            Directory.SetCurrentDirectory(Path.Combine(".", projectName));
+            string projectPath = Path.Combine(Environment.CurrentDirectory, "src", "projects", $"{projectName}AdminProject");
             Directory.Move(
-                sourceDirName: $"{Environment.CurrentDirectory}/src/projects/adminProject",
-                projectPath
+                sourceDirName: Path.Combine(Environment.CurrentDirectory, "src", "projects", "adminProject"),
+                destDirName: projectPath
             );
 
-            await replaceFileContentWithProjectName(
-                path: $"{Environment.CurrentDirectory}/{projectName.ToPascalCase()}.sln",
+            await ReplaceFileContentWithProjectName(
+                path: Path.Combine(Environment.CurrentDirectory, $"{projectName.ToPascalCase()}.sln"),
                 search: "adminProject",
                 projectName: $"{projectName}AdminProject"
             );
 
             Directory.SetCurrentDirectory("../");
 
-            static async Task replaceFileContentWithProjectName(
+            static async Task ReplaceFileContentWithProjectName(
                 string path,
                 string search,
                 string projectName
@@ -193,14 +190,13 @@ public class CreateNewProjectCommand : IStreamRequest<CreatedNewProjectResponse>
                 fileContent = fileContent.Replace(search, projectName);
                 await File.WriteAllTextAsync(path, fileContent);
             }
-
-
         }
-        private static async Task deleteForAdminProject(string projectName)
+
+        private static async Task DeleteForAdminProject(string projectName)
         {
-            Directory.SetCurrentDirectory($"./{projectName}");
-            string solutionPath = $"{Environment.CurrentDirectory}/{projectName.ToPascalCase()}.sln";
-            string directoryToDelete = $"{Environment.CurrentDirectory}/src/projects/adminProject";
+            Directory.SetCurrentDirectory(Path.Combine(".", projectName));
+            string solutionPath = Path.Combine(Environment.CurrentDirectory, $"{projectName.ToPascalCase()}.sln");
+            string directoryToDelete = Path.Combine(Environment.CurrentDirectory, "src", "projects", "adminProject");
             if (Directory.Exists(directoryToDelete))
             {
                 Directory.Delete(directoryToDelete, true);
@@ -209,62 +205,63 @@ public class CreateNewProjectCommand : IStreamRequest<CreatedNewProjectResponse>
             await RemoveProjectsFromSolutionAsync(solutionPath, new List<string> { "{8F30C7ED-8A79-4BD2-8413-CB62688F1636}", "{CF600D2A-BC95-4C87-9908-DA3F37DA5BE8}", "{1D50F0A7-8B27-44BD-97E1-B1C696D3E834}", "{3366F4DF-22C7-4542-BA19-6C7653F73C5D}", "{A120FD32-EB2D-4F6D-9AB7-8736B612DC9A}" });
             Directory.SetCurrentDirectory("../");
         }
-        private async Task removeSecurityMechanism(string projectName)
+
+        private async Task RemoveSecurityMechanism(string projectName)
         {
-            string slnPath = $"{Environment.CurrentDirectory}/{projectName.ToPascalCase()}";
-            string projectSourcePath = $"{slnPath}/src/projects/{projectName.ToCamelCase()}";
-            string corePackagePath = $"{slnPath}/src/corePackages";
-            string projectTestsPath = $"{slnPath}/tests/";
+            string slnPath = Path.Combine(Environment.CurrentDirectory, projectName.ToPascalCase());
+            string projectSourcePath = Path.Combine(slnPath, "src", "projects", projectName.ToCamelCase());
+            string corePackagePath = Path.Combine(slnPath, "src", "corePackages");
+            string projectTestsPath = Path.Combine(slnPath, "tests");
 
             string[] dirsToDelete = new[]
             {
-                $"{projectSourcePath}/webAPI.Application/Features/Auth",
-                $"{projectSourcePath}/webAPI.Application/Features/OperationClaims",
-                $"{projectSourcePath}/webAPI.Application/Features/UserOperationClaims",
-                $"{projectSourcePath}/webAPI.Application/Features/Users",
-                $"{projectSourcePath}/webAPI.Application/Services/AuthenticatorService",
-                $"{projectSourcePath}/webAPI.Application/Services/AuthService",
-                $"{projectSourcePath}/webAPI.Application/Services/OperationClaims",
-                $"{projectSourcePath}/webAPI.Application/Services/UserOperationClaims",
-                $"{projectSourcePath}/webAPI.Application/Services/UsersService",
-                $"{projectTestsPath}/Application.Tests/Features/Users",
+                Path.Combine(projectSourcePath, "webAPI.Application", "Features", "Auth"),
+                Path.Combine(projectSourcePath, "webAPI.Application", "Features", "OperationClaims"),
+                Path.Combine(projectSourcePath, "webAPI.Application", "Features", "UserOperationClaims"),
+                Path.Combine(projectSourcePath, "webAPI.Application", "Features", "Users"),
+                Path.Combine(projectSourcePath, "webAPI.Application", "Services", "AuthenticatorService"),
+                Path.Combine(projectSourcePath, "webAPI.Application", "Services", "AuthService"),
+                Path.Combine(projectSourcePath, "webAPI.Application", "Services", "OperationClaims"),
+                Path.Combine(projectSourcePath, "webAPI.Application", "Services", "UserOperationClaims"),
+                Path.Combine(projectSourcePath, "webAPI.Application", "Services", "UsersService"),
+                Path.Combine(projectTestsPath, "Application.Tests", "Features", "Users"),
             };
             foreach (string dirPath in dirsToDelete)
                 Directory.Delete(dirPath, recursive: true);
 
             string[] filesToDelete = new[]
             {
-                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IEmailAuthenticatorRepository.cs",
-                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IOperationClaimRepository.cs",
-                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IOtpAuthenticatorRepository.cs",
-                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IRefreshTokenRepository.cs",
-                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IUserOperationClaimRepository.cs",
-                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IUserRepository.cs",
-                $"{corePackagePath}/Core.Persistence/Configurations/EmailAuthenticatorConfiguration.cs",
-                $"{corePackagePath}/Core.Persistence/Configurations/OperationClaimConfiguration.cs",
-                $"{corePackagePath}/Core.Persistence/Configurations/OtpAuthenticatorConfiguration.cs",
-                $"{corePackagePath}/Core.Persistence/Configurations/RefreshTokenConfiguration.cs",
-                $"{corePackagePath}/Core.Persistence/Configurations/UserConfiguration.cs",
-                $"{corePackagePath}/Core.Persistence/Configurations/UserOperationClaimConfiguration.cs",
-                $"{projectSourcePath}/webAPI.Persistence/Repositories/EmailAuthenticatorRepository.cs",
-                $"{projectSourcePath}/webAPI.Persistence/Repositories/OperationClaimRepository.cs",
-                $"{projectSourcePath}/webAPI.Persistence/Repositories/OtpAuthenticatorRepository.cs",
-                $"{projectSourcePath}/webAPI.Persistence/Repositories/RefreshTokenRepository.cs",
-                $"{projectSourcePath}/webAPI.Persistence/Repositories/UserOperationClaimRepository.cs",
-                $"{projectSourcePath}/webAPI.Persistence/Repositories/UserRepository.cs",
-                $"{projectSourcePath}/webAPI/Controllers/AuthController.cs",
-                $"{projectSourcePath}/webAPI/Controllers/OperationClaimsController.cs",
-                $"{projectSourcePath}/webAPI/Controllers/UserOperationClaimsController.cs",
-                $"{projectSourcePath}/webAPI/Controllers/UsersController.cs",
-                $"{projectTestsPath}/Application.Tests/DependencyResolvers/UsersTestServiceRegistration.cs",
-                $"{projectTestsPath}/Application.Tests/Mocks/FakeData/UserFakeData.cs",
-                $"{projectTestsPath}/Application.Tests/Mocks/Repositories/UserMockRepository.cs",
+                Path.Combine(projectSourcePath, "webAPI.Application", "Services", "Repositories", "IEmailAuthenticatorRepository.cs"),
+                Path.Combine(projectSourcePath, "webAPI.Application", "Services", "Repositories", "IOperationClaimRepository.cs"),
+                Path.Combine(projectSourcePath, "webAPI.Application", "Services", "Repositories", "IOtpAuthenticatorRepository.cs"),
+                Path.Combine(projectSourcePath, "webAPI.Application", "Services", "Repositories", "IRefreshTokenRepository.cs"),
+                Path.Combine(projectSourcePath, "webAPI.Application", "Services", "Repositories", "IUserOperationClaimRepository.cs"),
+                Path.Combine(projectSourcePath, "webAPI.Application", "Services", "Repositories", "IUserRepository.cs"),
+                Path.Combine(corePackagePath, "Core.Persistence", "Configurations", "EmailAuthenticatorConfiguration.cs"),
+                Path.Combine(corePackagePath, "Core.Persistence", "Configurations", "OperationClaimConfiguration.cs"),
+                Path.Combine(corePackagePath, "Core.Persistence", "Configurations", "OtpAuthenticatorConfiguration.cs"),
+                Path.Combine(corePackagePath, "Core.Persistence", "Configurations", "RefreshTokenConfiguration.cs"),
+                Path.Combine(corePackagePath, "Core.Persistence", "Configurations", "UserConfiguration.cs"),
+                Path.Combine(corePackagePath, "Core.Persistence", "Configurations", "UserOperationClaimConfiguration.cs"),
+                Path.Combine(projectSourcePath, "webAPI.Persistence", "Repositories", "EmailAuthenticatorRepository.cs"),
+                Path.Combine(projectSourcePath, "webAPI.Persistence", "Repositories", "OperationClaimRepository.cs"),
+                Path.Combine(projectSourcePath, "webAPI.Persistence", "Repositories", "OtpAuthenticatorRepository.cs"),
+                Path.Combine(projectSourcePath, "webAPI.Persistence", "Repositories", "RefreshTokenRepository.cs"),
+                Path.Combine(projectSourcePath, "webAPI.Persistence", "Repositories", "UserOperationClaimRepository.cs"),
+                Path.Combine(projectSourcePath, "webAPI.Persistence", "Repositories", "UserRepository.cs"),
+                Path.Combine(projectSourcePath, "webAPI", "Controllers", "AuthController.cs"),
+                Path.Combine(projectSourcePath, "webAPI", "Controllers", "OperationClaimsController.cs"),
+                Path.Combine(projectSourcePath, "webAPI", "Controllers", "UserOperationClaimsController.cs"),
+                Path.Combine(projectSourcePath, "webAPI", "Controllers", "UsersController.cs"),
+                Path.Combine(projectTestsPath, "Application.Tests", "DependencyResolvers", "UsersTestServiceRegistration.cs"),
+                Path.Combine(projectTestsPath, "Application.Tests", "Mocks", "FakeData", "UserFakeData.cs"),
+                Path.Combine(projectTestsPath, "Application.Tests", "Mocks", "Repositories", "UserMockRepository.cs"),
             };
             foreach (string filePath in filesToDelete)
                 File.Delete(filePath);
 
             await FileHelper.RemoveLinesAsync(
-              filePath: $"{projectSourcePath}/webAPI.Application/ApplicationServiceRegistration.cs",
+              filePath: Path.Combine(projectSourcePath, "webAPI.Application", "ApplicationServiceRegistration.cs"),
               predicate: line =>
                   (
                       new[]
@@ -276,7 +273,7 @@ public class CreateNewProjectCommand : IStreamRequest<CreatedNewProjectResponse>
           );
 
             await FileHelper.RemoveLinesAsync(
-                filePath: $"{projectTestsPath}/Application.Tests/Startup.cs",
+                filePath: Path.Combine(projectTestsPath, "Application.Tests", "Startup.cs"),
                 predicate: line =>
                     (
                         new[]
@@ -288,7 +285,7 @@ public class CreateNewProjectCommand : IStreamRequest<CreatedNewProjectResponse>
             );
 
             await FileHelper.RemoveContentAsync(
-                filePath: $"{projectSourcePath}/webAPI/Program.cs",
+                filePath: Path.Combine(projectSourcePath, "webAPI", "Program.cs"),
                 contents: new[]
                 {
                     "using Core.Security;",
@@ -366,86 +363,99 @@ app.UseAuthorization();"
                 }
             );
         }
-        private async Task removeSecurityMechanismForAdminProject(string projectName)
+        private async Task RemoveSecurityMechanismForAdminProject(string projectName)
         {
-            string slnPath = $"{Environment.CurrentDirectory}/{projectName.ToPascalCase()}";
+            string slnPath = Path.Combine(Environment.CurrentDirectory, projectName.ToPascalCase());
 
-            string projectSourcePath = $"{slnPath}/src/projects/{projectName.ToCamelCase()}AdminProject";
-            string corePackagePath = $"{slnPath}/src/corePackages";
+        string projectSourcePath = Path.Combine(slnPath, "src", "projects", projectName.ToCamelCase() + "AdminProject");
+        string corePackagePath = Path.Combine(slnPath, "src", "corePackages");
 
-            string[] dirsToDelete = new[]
+        string[] dirsToDelete = new[]
+        {
+            "webAPI.Application/Features/Auth",
+            "webAPI.Application/Features/OperationClaims",
+            "webAPI.Application/Features/UserOperationClaims",
+            "webAPI.Application/Features/Users",
+            "webAPI.Application/Services/AuthenticatorService",
+            "webAPI.Application/Services/AuthService",
+            "webAPI.Application/Services/OperationClaims",
+            "webAPI.Application/Services/UserOperationClaims",
+            "webAPI.Application/Services/UsersService"
+        };
+
+        foreach (string relativePath in dirsToDelete)
+        {
+            string dirPath = Path.Combine(projectSourcePath, relativePath);
+            if (Directory.Exists(dirPath))
             {
-                $"{projectSourcePath}/webAPI.Application/Features/Auth",
-                $"{projectSourcePath}/webAPI.Application/Features/OperationClaims",
-                $"{projectSourcePath}/webAPI.Application/Features/UserOperationClaims",
-                $"{projectSourcePath}/webAPI.Application/Features/Users",
-                $"{projectSourcePath}/webAPI.Application/Services/AuthenticatorService",
-                $"{projectSourcePath}/webAPI.Application/Services/AuthService",
-                $"{projectSourcePath}/webAPI.Application/Services/OperationClaims",
-                $"{projectSourcePath}/webAPI.Application/Services/UserOperationClaims",
-                $"{projectSourcePath}/webAPI.Application/Services/UsersService",
-            };
-            foreach (string dirPath in dirsToDelete)
                 Directory.Delete(dirPath, recursive: true);
+            }
+        }
 
-            string[] filesToDelete = new[]
+        string[] filesToDelete = new[]
+        {
+            "webAPI.Application/Services/Repositories/IEmailAuthenticatorRepository.cs",
+            "webAPI.Application/Services/Repositories/IOperationClaimRepository.cs",
+            "webAPI.Application/Services/Repositories/IOtpAuthenticatorRepository.cs",
+            "webAPI.Application/Services/Repositories/IRefreshTokenRepository.cs",
+            "webAPI.Application/Services/Repositories/IUserOperationClaimRepository.cs",
+            "webAPI.Application/Services/Repositories/IUserRepository.cs",
+            "Core.Persistence/Configurations/EmailAuthenticatorConfiguration.cs",
+            "Core.Persistence/Configurations/OperationClaimConfiguration.cs",
+            "Core.Persistence/Configurations/OtpAuthenticatorConfiguration.cs",
+            "Core.Persistence/Configurations/RefreshTokenConfiguration.cs",
+            "Core.Persistence/Configurations/UserConfiguration.cs",
+            "Core.Persistence/Configurations/UserOperationClaimConfiguration.cs",
+            "webAPI.Persistence/Repositories/EmailAuthenticatorRepository.cs",
+            "webAPI.Persistence/Repositories/OperationClaimRepository.cs",
+            "webAPI.Persistence/Repositories/OtpAuthenticatorRepository.cs",
+            "webAPI.Persistence/Repositories/RefreshTokenRepository.cs",
+            "webAPI.Persistence/Repositories/UserOperationClaimRepository.cs",
+            "webAPI.Persistence/Repositories/UserRepository.cs",
+            "webAPI/Controllers/AuthController.cs",
+            "webAPI/Controllers/OperationClaimsController.cs",
+            "webAPI/Controllers/UserOperationClaimsController.cs",
+            "webAPI/Controllers/UsersController.cs"
+        };
+
+        foreach (string relativePath in filesToDelete)
+        {
+            string filePath = Path.Combine(projectSourcePath, relativePath);
+            if (File.Exists(filePath))
             {
-                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IEmailAuthenticatorRepository.cs",
-                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IOperationClaimRepository.cs",
-                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IOtpAuthenticatorRepository.cs",
-                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IRefreshTokenRepository.cs",
-                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IUserOperationClaimRepository.cs",
-                $"{projectSourcePath}/webAPI.Application/Services/Repositories/IUserRepository.cs",
-                $"{corePackagePath}/Core.Persistence/Configurations/EmailAuthenticatorConfiguration.cs",
-                $"{corePackagePath}/Core.Persistence/Configurations/OperationClaimConfiguration.cs",
-                $"{corePackagePath}/Core.Persistence/Configurations/OtpAuthenticatorConfiguration.cs",
-                $"{corePackagePath}/Core.Persistence/Configurations/RefreshTokenConfiguration.cs",
-                $"{corePackagePath}/Core.Persistence/Configurations/UserConfiguration.cs",
-                $"{corePackagePath}/Core.Persistence/Configurations/UserOperationClaimConfiguration.cs",
-                $"{projectSourcePath}/webAPI.Persistence/Repositories/EmailAuthenticatorRepository.cs",
-                $"{projectSourcePath}/webAPI.Persistence/Repositories/OperationClaimRepository.cs",
-                $"{projectSourcePath}/webAPI.Persistence/Repositories/OtpAuthenticatorRepository.cs",
-                $"{projectSourcePath}/webAPI.Persistence/Repositories/RefreshTokenRepository.cs",
-                $"{projectSourcePath}/webAPI.Persistence/Repositories/UserOperationClaimRepository.cs",
-                $"{projectSourcePath}/webAPI.Persistence/Repositories/UserRepository.cs",
-                $"{projectSourcePath}/webAPI/Controllers/AuthController.cs",
-                $"{projectSourcePath}/webAPI/Controllers/OperationClaimsController.cs",
-                $"{projectSourcePath}/webAPI/Controllers/UserOperationClaimsController.cs",
-                $"{projectSourcePath}/webAPI/Controllers/UsersController.cs",
-            };
-            foreach (string filePath in filesToDelete)
                 File.Delete(filePath);
+            }
+        }
 
-            await FileHelper.RemoveLinesAsync(
-              filePath: $"{projectSourcePath}/webAPI.Application/ApplicationServiceRegistration.cs",
-              predicate: line =>
-                  (
-                      new[]
-                      {
-                            "using Application.Services.AuthService;",
-                            "services.AddScopedWithManagers(typeof(IAuthService).Assembly);",
-                      }
-                  ).Any(line.Contains)
-          );
+        await FileHelper.RemoveLinesAsync(
+            Path.Combine(projectSourcePath, "webAPI.Application", "ApplicationServiceRegistration.cs"),
+            line => new[]
+            {
+                "using Application.Services.AuthService;",
+                "services.AddScopedWithManagers(typeof(IAuthService).Assembly);"
+            }.Any(line.Contains)
+        );
 
 
-            await FileHelper.RemoveContentAsync(
-                filePath: $"{projectSourcePath}/webAPI/Program.cs",
-                contents: new[]
-                {
-                    "using Core.Security;",
-                    "using Core.Security.Encryption;",
-                    "using Core.Security.JWT;",
-                    "using Core.WebAPI.Extensions.Swagger;",
-                    "using Microsoft.AspNetCore.Authentication.JwtBearer;",
-                    "using Microsoft.IdentityModel.Tokens;",
-                    "using Microsoft.OpenApi.Models;",
-                    "using System.Reflection;",
-                    "using Swashbuckle.AspNetCore.SwaggerGen;",
-                    "using Core.Utilities.ApiDoc;",
-                    "using Core.Utilities.Messages;",
-                    "builder.Services.AddSecurityServices();",
-                    @"TokenOptions? tokenOptions = builder.Configuration.GetSection(""TokenOptions"").Get<TokenOptions>();
+  await FileHelper.RemoveContentAsync(
+            Path.Combine(projectSourcePath, "webAPI", "Program.cs"),
+            new[]
+            {
+                "using Core.Security;",
+                "using Core.Security.Encryption;",
+                "using Core.Security.JWT;",
+                "using Core.WebAPI.Extensions.Swagger;",
+                "using Microsoft.AspNetCore.Authentication.JwtBearer;",
+                "using Microsoft.IdentityModel.Tokens;",
+                "using Microsoft.OpenApi.Models;",
+                "using System.Reflection;",
+                "using Swashbuckle.AspNetCore.SwaggerGen;",
+                "using Core.Utilities.ApiDoc;",
+                "using Core.Utilities.Messages;",
+                "builder.Services.AddSecurityServices();",
+                "app.UseAuthentication();",
+                "app.UseAuthorization();",
+                @"TokenOptions? tokenOptions = builder.Configuration.GetSection(""TokenOptions"").Get<TokenOptions>();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -505,34 +515,37 @@ builder.Services.AddSwaggerGen(opt =>
 });",
 @"app.UseAuthentication();
 app.UseAuthorization();"
-                }
-            );
+            }
+        );
+
+
         }
-        private static async Task RemoveProjectsFromSolutionAsync(string solutionFilePath, List<string> projectGuidsToRemove)
+
+    public static async Task RemoveProjectsFromSolutionAsync(string solutionFilePath, List<string> projectGuidsToRemove)
+    {
+        string[] solutionLines = await File.ReadAllLinesAsync(solutionFilePath);
+        List<string> newSolutionLines = new List<string>();
+
+        bool shouldRemoveCurrentSection = false;
+        foreach (string line in solutionLines)
         {
-            string[] solutionLines = await File.ReadAllLinesAsync(solutionFilePath);
-            List<string> newSolutionLines = new List<string>();
-
-            bool shouldRemoveCurrentSection = false;
-            foreach (string line in solutionLines)
+            if (line.StartsWith("Project("))
             {
-                if (line.StartsWith("Project("))
-                {
-                    shouldRemoveCurrentSection = projectGuidsToRemove.Any(guid => line.Contains(guid));
-                }
-
-                if (!shouldRemoveCurrentSection)
-                {
-                    newSolutionLines.Add(line);
-                }
-
-                if (line.StartsWith("EndProject"))
-                {
-                    shouldRemoveCurrentSection = false;
-                }
+                shouldRemoveCurrentSection = projectGuidsToRemove.Any(guid => line.Contains(guid));
             }
 
-            await File.WriteAllLinesAsync(solutionFilePath, newSolutionLines);
+            if (!shouldRemoveCurrentSection)
+            {
+                newSolutionLines.Add(line);
+            }
+
+            if (line.StartsWith("EndProject"))
+            {
+                shouldRemoveCurrentSection = false;
+            }
         }
+
+        await File.WriteAllLinesAsync(solutionFilePath, newSolutionLines);
+    }
     }
 }
