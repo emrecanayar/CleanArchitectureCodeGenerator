@@ -33,12 +33,12 @@ public class GenerateQueryCommand : IStreamRequest<GeneratedQueryResponse>
         }
 
         public async IAsyncEnumerable<GeneratedQueryResponse> Handle(
-            GenerateQueryCommand request,
-            [EnumeratorCancellation] CancellationToken cancellationToken
-        )
+           GenerateQueryCommand request,
+           [EnumeratorCancellation] CancellationToken cancellationToken
+       )
         {
             await _businessRules.FileShouldNotBeExists(
-                @$"{request.ProjectPath}\Application\features\{request.FeatureName.ToPascalCase()}\Queries\{request.QueryName}\{request.QueryName}Query.cs"
+                Path.Combine(request.ProjectPath, "Application", "features", request.FeatureName.ToPascalCase(), "Queries", request.QueryName, $"{request.QueryName}Query.cs")
             );
 
             GeneratedQueryResponse response = new();
@@ -83,24 +83,24 @@ public class GenerateQueryCommand : IStreamRequest<GeneratedQueryResponse>
         )
         {
             string templateDir =
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Query}\Folders\Application";
+                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Query, "Folders", "Application");
             return await generateFolderCodes(
                 templateDir,
-                outputDir: $@"{projectPath}\webAPI.Application",
+                outputDir: Path.Combine(projectPath, "webAPI.Application"),
                 QueryTemplateData
             );
         }
 
         private async Task<ICollection<string>> injectOperationClaims(
-            string projectPath,
-            string featureName,
-            QueryTemplateData QueryTemplateData
-        )
+               string projectPath,
+               string featureName,
+               QueryTemplateData QueryTemplateData
+           )
         {
             string featureOperationClaimFilePath =
-                @$"{projectPath}\webAPI.Application\Features\{featureName}\Constants\{featureName}OperationClaims.cs";
+                Path.Combine(projectPath, "webAPI.Application", "Features", featureName, "Constants", $"{featureName}OperationClaims.cs");
             string[] queryOperationClaimPropertyTemplateCodeLines = await File.ReadAllLinesAsync(
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Query}\Lines\QueryOperationClaimProperty.cs.sbn"
+                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Query, "Lines", "QueryOperationClaimProperty.cs.sbn")
             );
             string[] queryOperationClaimPropertyCodeLines = await Task.WhenAll(
                 queryOperationClaimPropertyTemplateCodeLines.Select(
@@ -119,10 +119,10 @@ public class GenerateQueryCommand : IStreamRequest<GeneratedQueryResponse>
         }
 
         private async Task<ICollection<string>> generateFolderCodes(
-            string templateDir,
-            string outputDir,
-            QueryTemplateData QueryTemplateData
-        )
+              string templateDir,
+              string outputDir,
+              QueryTemplateData QueryTemplateData
+          )
         {
             List<string> templateFilePaths = DirectoryHelper
                 .GetFilesInDirectoryTree(
@@ -146,16 +146,17 @@ public class GenerateQueryCommand : IStreamRequest<GeneratedQueryResponse>
             return newRenderedFilePaths;
         }
 
+
         private async Task<ICollection<string>> injectWebApiEndpoint(
-            string projectPath,
-            string featureName,
-            QueryTemplateData QueryTemplateData
-        )
+             string projectPath,
+             string featureName,
+             QueryTemplateData QueryTemplateData
+         )
         {
             string controllerFilePath =
-                @$"{projectPath}\webAPI\Controllers\{featureName}Controller.cs";
+                Path.Combine(projectPath, "webAPI", "Controllers", $"{featureName}Controller.cs");
             string[] controllerEndPointMethodTemplateCodeLines = await File.ReadAllLinesAsync(
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Query}\Lines\ControllerEndPointMethod.cs.sbn"
+                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Query, "Lines", "ControllerEndPointMethod.cs.sbn")
             );
             string[] controllerEndPointMethodRenderedCodeLines = await Task.WhenAll(
                 controllerEndPointMethodTemplateCodeLines.Select(
@@ -170,7 +171,7 @@ public class GenerateQueryCommand : IStreamRequest<GeneratedQueryResponse>
             );
 
             string[] queryUsingNameSpaceTemplateCodeLines = await File.ReadAllLinesAsync(
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Query}\Lines\QueryUsingNameSpaces.cs.sbn"
+                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Query, "Lines", "QueryUsingNameSpaces.cs.sbn")
             );
             string[] queryUsingNameSpaceCodeLines = await Task.WhenAll(
                 queryUsingNameSpaceTemplateCodeLines.Select(
