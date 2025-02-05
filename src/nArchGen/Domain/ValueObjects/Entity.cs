@@ -4,8 +4,8 @@ namespace Domain.ValueObjects;
 
 public class Entity
 {
-    public string Name { get; set; }
-    public string IdType { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string IdType { get; set; } = string.Empty;
     public ICollection<PropertyInfo> Properties { get; set; }
 
     public Entity()

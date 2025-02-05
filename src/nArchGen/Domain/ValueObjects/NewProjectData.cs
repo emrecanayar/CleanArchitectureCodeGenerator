@@ -4,5 +4,5 @@ namespace Domain.ValueObjects;
 
 public class NewProjectData : ITemplateData
 {
-    public string ProjectName { get; set; }
+    public string ProjectName { get; set; } = string.Empty;
 }
