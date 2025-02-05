@@ -21,9 +21,9 @@ public partial class GenerateCrudCliCommand
         public bool IsSecuredOperationUsed { get; set; }
 
         public string ProjectPath =>
-            ProjectName != null
-                ? $@"{Environment.CurrentDirectory}\src\corePackages\Core.Domain\Entities"
-                : Environment.CurrentDirectory;
+               ProjectName != null
+                   ? Path.Combine(Environment.CurrentDirectory, "src", "corePackages", "Core.Domain", "Entities")
+                   : Environment.CurrentDirectory;
 
         public void CheckProjectName()
         {
@@ -36,18 +36,14 @@ public partial class GenerateCrudCliCommand
             }
 
             string[] layerFolders = { "webAPI.Application", "webAPI.Domain", "webAPI.Persistence", "webAPI" };
-            if (
-                layerFolders.All(
-                    folder => Directory.Exists($"{Environment.CurrentDirectory}/{folder}")
-                )
-            )
+            if (layerFolders.All(folder => Directory.Exists(Path.Combine(Environment.CurrentDirectory, folder))))
                 return;
 
             string[] projects = Directory
-                .GetDirectories($"{Environment.CurrentDirectory}/src")
+                .GetDirectories(Path.Combine(Environment.CurrentDirectory, "src"))
                 .Select(Path.GetFileName)
                 .Where(project => project != "corePackages")
-                .ToArray()!;
+                .ToArray();
             if (projects.Length == 0)
                 throw new BusinessException("No projects found in src");
             if (projects.Length == 1)
@@ -74,13 +70,11 @@ public partial class GenerateCrudCliCommand
             }
 
             string[] entities = Directory
-                .GetFiles(path: @$"{ProjectPath}")
+                .GetFiles(ProjectPath)
                 .Select(Path.GetFileNameWithoutExtension)
-                .ToArray()!;
+                .ToArray();
             if (entities.Length == 0)
-                throw new BusinessException(
-                    $"No entities found in \"{ProjectPath}"
-                );
+                throw new BusinessException($"No entities found in \"{ProjectPath}\"");
 
             EntityName = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
@@ -94,22 +88,18 @@ public partial class GenerateCrudCliCommand
         {
             if (DbContextName is not null)
             {
-                AnsiConsole.MarkupLine(
-                    $"Selected [green]DbContext[/] is [blue]{DbContextName}[/]."
-                );
+                AnsiConsole.MarkupLine($"Selected [green]DbContext[/] is [blue]{DbContextName}[/].");
                 return;
             }
 
-            string persistencePath = $@"{Environment.CurrentDirectory}\src\corePackages\Core.Persistence\Contexts";
+            string persistencePath = Path.Combine(Environment.CurrentDirectory, "src", "corePackages", "Core.Persistence", "Contexts");
 
             string[] dbContexts = Directory
-                .GetFiles(path: persistencePath)
+                .GetFiles(persistencePath)
                 .Select(Path.GetFileNameWithoutExtension)
-                .ToArray()!;
+                .ToArray();
             if (dbContexts.Length == 0)
-                throw new BusinessException(
-                    $"No DbContexts found in {persistencePath}"
-                );
+                throw new BusinessException($"No DbContexts found in {persistencePath}");
 
             DbContextName = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
@@ -157,9 +147,10 @@ public partial class GenerateCrudCliCommand
                 });
         }
 
+
         public void CheckProjectsArgument()
         {
-            string projectPaths = $@"{Environment.CurrentDirectory}\src\projects";
+            string projectPaths = Path.Combine(Environment.CurrentDirectory, "src", "projects");
 
             string[] projectNames = Directory.GetDirectories(projectPaths)
                 .Select(Path.GetFileName)
@@ -167,10 +158,8 @@ public partial class GenerateCrudCliCommand
 
             if (projectNames.Length == 0)
             {
-
                 throw new BusinessException($"No Projects found in {projectPaths}");
             }
-
 
             ProjectName = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
