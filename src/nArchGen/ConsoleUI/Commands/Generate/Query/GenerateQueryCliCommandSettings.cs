@@ -22,9 +22,9 @@ public partial class GenerateQueryCliCommand
         public bool IsSecuredOperationUsed { get; set; }
 
         public string ProjectPath =>
-            ProjectName != null
-                ? $@"{Environment.CurrentDirectory}\src\projects\{ProjectName.ToCamelCase()}"
-                : Environment.CurrentDirectory;
+        ProjectName != null
+            ? Path.Combine(Environment.CurrentDirectory, "src", "projects", ProjectName.ToCamelCase())
+            : Environment.CurrentDirectory;
 
         public void CheckQueryName()
         {
@@ -49,14 +49,18 @@ public partial class GenerateQueryCliCommand
                 return;
             }
 
-            string?[] features = Directory
-                .GetDirectories($"{ProjectPath}/webAPI.Application/Features")
-                .Select(Path.GetFileName)
-                .ToArray()!;
+            string featuresPath = Path.Combine(ProjectPath, "webAPI.Application", "Features");
+
+            if (!Directory.Exists(featuresPath))
+                throw new BusinessException($"No feature found in \"{featuresPath}\".");
+
+            string[] features = Directory.GetDirectories(featuresPath)
+                                         .Select(Path.GetFileName)
+                                         .Where(name => name is not null)
+                                         .ToArray()!;
+
             if (features.Length == 0)
-                throw new BusinessException(
-                    $"No feature found in \"{ProjectPath}/Application/Features\"."
-                );
+                throw new BusinessException($"No feature found in \"{featuresPath}\".");
 
             FeatureName = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
@@ -66,31 +70,39 @@ public partial class GenerateQueryCliCommand
             );
         }
 
+
         public void CheckProjectName()
         {
             if (ProjectName != null)
             {
                 if (!Directory.Exists(ProjectPath))
                     throw new BusinessException("Project not found");
+
                 AnsiConsole.MarkupLine($"Selected [green]project[/] is [blue]{ProjectName}[/].");
                 return;
             }
 
             string[] layerFolders = { "Application", "Domain", "Persistence", "WebAPI" };
-            if (
-                layerFolders.All(
-                    folder => Directory.Exists($"{Environment.CurrentDirectory}/{folder}")
-                )
-            )
+            bool allLayersExist = layerFolders.All(folder =>
+                Directory.Exists(Path.Combine(Environment.CurrentDirectory, folder))
+            );
+
+            if (allLayersExist)
                 return;
 
-            string[] projects = Directory
-                .GetDirectories($"{Environment.CurrentDirectory}/src")
-                .Select(Path.GetFileName)
-                .Where(project => project != "corePackages")
-                .ToArray()!;
+            string srcPath = Path.Combine(Environment.CurrentDirectory, "src");
+
+            if (!Directory.Exists(srcPath))
+                throw new BusinessException("No 'src' folder found in the current directory.");
+
+            string[] projects = Directory.GetDirectories(srcPath)
+                                         .Select(Path.GetFileName)
+                                         .Where(name => name is not null && name != "corePackages")
+                                         .ToArray()!;
+
             if (projects.Length == 0)
-                throw new BusinessException("No projects found in src");
+                throw new BusinessException("No projects found in 'src'.");
+
             if (projects.Length == 1)
             {
                 ProjectName = projects.First();
@@ -111,9 +123,13 @@ public partial class GenerateQueryCliCommand
             List<string> mechanismsToPrompt = new();
 
             if (IsSecuredOperationUsed)
+            {
                 AnsiConsole.MarkupLine("[green]SecuredOperation[/] is used.");
+            }
             else
+            {
                 mechanismsToPrompt.Add("Secured Operation");
+            }
 
             if (mechanismsToPrompt.Count == 0)
                 return;
@@ -131,33 +147,31 @@ public partial class GenerateQueryCliCommand
                     .AddChoices(mechanismsToPrompt)
             );
 
-            selectedMechanisms
-                .ToList()
-                .ForEach(mechanism =>
+            foreach (var mechanism in selectedMechanisms)
+            {
+                switch (mechanism)
                 {
-                    switch (mechanism)
-                    {
-                        case "Secured Operation":
-                            IsSecuredOperationUsed = true;
-                            break;
-                    }
-                });
+                    case "Secured Operation":
+                        IsSecuredOperationUsed = true;
+                        break;
+                }
+            }
         }
 
         public void CheckProjectsArgument()
         {
-            string projectPaths = $@"{Environment.CurrentDirectory}\src\projects";
+            string projectPaths = Path.Combine(Environment.CurrentDirectory, "src", "projects");
+
+            if (!Directory.Exists(projectPaths))
+                throw new BusinessException($"No 'projects' directory found in {projectPaths}");
 
             string[] projectNames = Directory.GetDirectories(projectPaths)
-                .Select(Path.GetFileName)
-                .ToArray();
+                                             .Select(Path.GetFileName)
+                                             .Where(name => name is not null)
+                                             .ToArray()!;
 
             if (projectNames.Length == 0)
-            {
-
-                throw new BusinessException($"No Projects found in {projectPaths}");
-            }
-
+                throw new BusinessException($"No projects found in {projectPaths}");
 
             ProjectName = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
