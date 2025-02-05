@@ -25,9 +25,9 @@ public partial class GenerateCommandCliCommand
         public string? EndPointMethod { get; set; }
 
         public string ProjectPath =>
-            ProjectName != null
-                ? $@"{Environment.CurrentDirectory}\src\projects\{ProjectName.ToCamelCase()}"
-                : Environment.CurrentDirectory;
+           ProjectName != null
+               ? Path.Combine(Environment.CurrentDirectory, "src", "projects", ProjectName.ToCamelCase())
+               : Environment.CurrentDirectory;
 
         public void CheckCommandName()
         {
@@ -42,6 +42,7 @@ public partial class GenerateCommandCliCommand
             );
         }
 
+
         public void CheckFeatureName()
         {
             if (FeatureName is not null)
@@ -52,13 +53,13 @@ public partial class GenerateCommandCliCommand
                 return;
             }
 
-            string?[] features = Directory
-                .GetDirectories($"{ProjectPath}/webAPI.Application/Features")
+            string[] features = Directory
+                .GetDirectories(Path.Combine(ProjectPath, "webAPI.Application", "Features"))
                 .Select(Path.GetFileName)
                 .ToArray()!;
             if (features.Length == 0)
                 throw new BusinessException(
-                    $"No feature found in \"{ProjectPath}/webAPI.Application/Features\"."
+                    $"No feature found in \"{Path.Combine(ProjectPath, "webAPI.Application", "Features")}\"."
                 );
 
             FeatureName = AnsiConsole.Prompt(
@@ -82,13 +83,13 @@ public partial class GenerateCommandCliCommand
             string[] layerFolders = { "webAPI.Application", "webAPI.Domain", "webAPI.Persistence", "webAPI" };
             if (
                 layerFolders.All(
-                    folder => Directory.Exists($"{Environment.CurrentDirectory}/{folder}")
+                    folder => Directory.Exists(Path.Combine(Environment.CurrentDirectory, folder))
                 )
             )
                 return;
 
             string[] projects = Directory
-                .GetDirectories($"{Environment.CurrentDirectory}/src")
+                .GetDirectories(Path.Combine(Environment.CurrentDirectory, "src"))
                 .Select(Path.GetFileName)
                 .Where(project => project != "corePackages")
                 .ToArray()!;
@@ -165,7 +166,7 @@ public partial class GenerateCommandCliCommand
 
         public void CheckProjectsArgument()
         {
-            string projectPaths = $@"{Environment.CurrentDirectory}\src\projects";
+            string projectPaths = Path.Combine(Environment.CurrentDirectory, "src", "projects");
 
             string[] projectNames = Directory.GetDirectories(projectPaths)
                 .Select(Path.GetFileName)
@@ -173,10 +174,8 @@ public partial class GenerateCommandCliCommand
 
             if (projectNames.Length == 0)
             {
-
                 throw new BusinessException($"No Projects found in {projectPaths}");
             }
-
 
             ProjectName = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
