@@ -20,50 +20,52 @@ public partial class CreateNewProjectCliCommand : AsyncCommand<CreateNewProjectC
         settings.CheckIsThereSecurityMechanismArgument();
         settings.CheckIsThereAdminProjectArgument();
 
-        CreateNewProjectCommand request =
-            new(
-                projectName: settings.ProjectName!,
-                isThereSecurityMechanism: settings.IsThereSecurityMechanism,
-                isThereAdminProject: settings.IsThereAdminProject
+        var request = new CreateNewProjectCommand(
+            projectName: settings.ProjectName!,
+            isThereSecurityMechanism: settings.IsThereSecurityMechanism,
+            isThereAdminProject: settings.IsThereAdminProject
+        );
 
-            );
+        var resultsStream = _mediator.CreateStream(request);
 
-        IAsyncEnumerable<CreatedNewProjectResponse> resultsStream = _mediator.CreateStream(request);
-
-        await AnsiConsole
-            .Status()
+        await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots2)
-            .SpinnerStyle(style: Style.Parse(text: "blue"))
-            .StartAsync(
-                status: "Creating...",
-                action: async ctx =>
+            .SpinnerStyle(Style.Parse("blue"))
+            .StartAsync("Creating...", async ctx =>
+            {
+                await foreach (var result in resultsStream)
                 {
-                    await foreach (CreatedNewProjectResponse result in resultsStream)
+                    ctx.Status(result.CurrentStatusMessage);
+
+                    if (!string.IsNullOrWhiteSpace(result.LastOperationMessage))
                     {
-                        ctx.Status(result.CurrentStatusMessage);
+                        AnsiConsole.MarkupLine($":check_mark_button: {result.LastOperationMessage}");
+                    }
 
-                        if (result.LastOperationMessage is not null)
-                            AnsiConsole.MarkupLine(
-                                $":check_mark_button: {result.LastOperationMessage}"
-                            );
-
-                        if (result.NewFilePathsResult is not null)
+                    if (result.NewFilePathsResult is not null && result.NewFilePathsResult.Count > 0)
+                    {
+                        AnsiConsole.MarkupLine(":new_button: [green]Generated files:[/]");
+                        foreach (var filePath in result.NewFilePathsResult)
                         {
-                            AnsiConsole.MarkupLine(":new_button: [green]Generated files:[/]");
-                            foreach (string filePath in result.NewFilePathsResult)
-                                AnsiConsole.Write(
-                                    new TextPath(filePath)
-                                        .StemColor(Color.Yellow)
-                                        .LeafColor(Color.Blue)
-                                );
+                            AnsiConsole.Write(new TextPath(NormalizePath(filePath))
+                                .StemColor(Color.Yellow)
+                                .LeafColor(Color.Blue));
                         }
+                    }
 
-                        if (result.OutputMessage is not null)
-                            AnsiConsole.MarkupLine(result.OutputMessage);
+                    if (!string.IsNullOrWhiteSpace(result.OutputMessage))
+                    {
+                        AnsiConsole.MarkupLine(result.OutputMessage);
                     }
                 }
-            );
+            });
 
         return 0;
+    }
+
+    private static string NormalizePath(string path)
+    {
+        return path.Replace("\\", Path.DirectorySeparatorChar.ToString())
+                   .Replace("/", Path.DirectorySeparatorChar.ToString());
     }
 }

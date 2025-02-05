@@ -19,21 +19,22 @@ public partial class CreateNewProjectCliCommand
 
         public void CheckProjectNameArgument()
         {
-            if (ProjectName != null)
+            if (!string.IsNullOrWhiteSpace(ProjectName))
                 return;
 
-            ProjectName = AnsiConsole.Ask<string>("What's project name?");
+            ProjectName = AnsiConsole.Ask<string>("What's the project name?").Trim();
 
             if (string.IsNullOrWhiteSpace(ProjectName))
-                throw new ArgumentNullException(nameof(ProjectName));
+                throw new ArgumentException("Project name cannot be empty or whitespace.", nameof(ProjectName));
         }
 
         public void CheckIsThereSecurityMechanismArgument()
         {
             if (IsThereSecurityMechanism)
                 return;
+
             IsThereSecurityMechanism = AnsiConsole.Confirm(
-                prompt: "Do you want to add security mechanism to your project?",
+                "Do you want to add a security mechanism to your project?",
                 defaultValue: true
             );
         }
@@ -42,8 +43,9 @@ public partial class CreateNewProjectCliCommand
         {
             if (IsThereAdminProject)
                 return;
+
             IsThereAdminProject = AnsiConsole.Confirm(
-                prompt: "Do you want to add admin project to your project?",
+                "Do you want to add an admin project to your project?",
                 defaultValue: true
             );
         }
