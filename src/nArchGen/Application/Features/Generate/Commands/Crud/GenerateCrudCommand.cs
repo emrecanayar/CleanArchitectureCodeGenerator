@@ -11,10 +11,10 @@ namespace Application.Features.Generate.Commands.Crud;
 
 public class GenerateCrudCommand : IStreamRequest<GeneratedCrudResponse>
 {
-    public string ProjectPath { get; set; }
-    public string ProjectName { get; set; }
-    public CrudTemplateData CrudTemplateData { get; set; }
-    public string DbContextName { get; set; }
+    public string ProjectPath { get; set; } = string.Empty;
+    public string ProjectName { get; set; } = string.Empty;
+    public CrudTemplateData CrudTemplateData { get; set; } = default!;
+    public string DbContextName { get; set; } = string.Empty;
 
     public class GenerateCrudCommandHandler
         : IStreamRequestHandler<GenerateCrudCommand, GeneratedCrudResponse>
@@ -130,14 +130,13 @@ public class GenerateCrudCommand : IStreamRequest<GeneratedCrudResponse>
         }
 
         private async Task<string> injectEntityToContext(
-            string projectPath,
-            CrudTemplateData crudTemplateData
-        )
+               string projectPath,
+               CrudTemplateData crudTemplateData)
         {
-            string persistencePath = $@"{Environment.CurrentDirectory}\src\corePackages\Core.Persistence\Contexts\{crudTemplateData.DbContextName}.cs";
+            string persistencePath = Path.Combine(Environment.CurrentDirectory, "src", "corePackages", "Core.Persistence", "Contexts", $"{crudTemplateData.DbContextName}.cs");
 
             string[] entityNameSpaceUsingTemplate = await File.ReadAllLinesAsync(
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Crud}\Lines\EntityNameSpaceUsing.cs.sbn"
+                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Crud, "Lines", "EntityNameSpaceUsing.cs.sbn")
             );
             await CSharpCodeInjector.AddUsingToFile(persistencePath, entityNameSpaceUsingTemplate);
 
@@ -145,134 +144,128 @@ public class GenerateCrudCommand : IStreamRequest<GeneratedCrudResponse>
         }
 
         private async Task<ICollection<string>> generatePersistenceCodes(
-        string projectPath,
-        string projectName,
-        CrudTemplateData crudTemplateData
-    )
+               string projectPath,
+               string projectName,
+               CrudTemplateData crudTemplateData
+           )
         {
             string templateConfigurationDir =
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Crud}\Folders\Persistence\EntityConfigurations";
+                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Crud, "Folders", "Persistence", "EntityConfigurations");
             string templateRepositoryDir =
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Crud}\Folders\Persistence\Repositories";
+                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Crud, "Folders", "Persistence", "Repositories");
 
             string persistencePath =
-                $@"{Environment.CurrentDirectory}\src\corePackages\Core.Persistence\Configurations";
+                Path.Combine(Environment.CurrentDirectory, "src", "corePackages", "Core.Persistence", "Configurations");
 
             projectPath =
-                projectPath.Replace("corePackages", "projects").Replace("Core.Domain\\Entities", projectName);
+                projectPath.Replace("corePackages", "projects").Replace(Path.Combine("Core.Domain", "Entities"), projectName);
 
             await generateFolderCodes(
                templateConfigurationDir,
-               outputDir: $@"{persistencePath}",
+               outputDir: persistencePath,
                crudTemplateData);
 
             return await generateFolderCodes(
               templateRepositoryDir,
-              outputDir: $@"{projectPath}\webAPI.Persistence\Repositories",
+              outputDir: Path.Combine(projectPath, "webAPI.Persistence", "Repositories"),
               crudTemplateData);
         }
 
         private async Task<ICollection<string>> generateAdminPersistenceCodes(
-       string projectPath,
-       string projectName,
-       CrudTemplateData crudTemplateData
-   )
+                  string projectPath,
+                  string projectName,
+                  CrudTemplateData crudTemplateData)
         {
             string templateRepositoryDir =
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Crud}\Folders\Persistence\Repositories";
+                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Crud, "Folders", "Persistence", "Repositories");
 
             projectPath =
-               projectPath.Replace("corePackages", "projects").Replace("Core.Domain\\Entities", projectName);
+                projectPath.Replace("corePackages", "projects").Replace(Path.Combine("Core.Domain", "Entities"), projectName);
 
             return await generateFolderCodes(
-              templateRepositoryDir,
-              outputDir: $@"{projectPath}\webAPI.Persistence\Repositories",
-              crudTemplateData);
+                templateRepositoryDir,
+                outputDir: Path.Combine(projectPath, "webAPI.Persistence", "Repositories"),
+                crudTemplateData);
         }
 
         private async Task<ICollection<string>> generateApplicationCodes(
-            string projectPath,
-            string projectName,
-            CrudTemplateData crudTemplateData
-        )
+          string projectPath,
+          string projectName,
+          CrudTemplateData crudTemplateData
+      )
         {
-
             string templateDir =
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Crud}\Folders\Application";
+                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Crud, "Folders", "Application");
 
-            projectPath = projectPath.Replace("corePackages", "projects").Replace("Core.Domain\\Entities", projectName);
-
+            projectPath = projectPath.Replace("corePackages", "projects").Replace(Path.Combine("Core.Domain", "Entities"), projectName);
 
             return await generateFolderCodes(
                 templateDir,
-                outputDir: $@"{projectPath}\webAPI.Application",
+                outputDir: Path.Combine(projectPath, "webAPI.Application"),
                 crudTemplateData
             );
         }
 
         private async Task<ICollection<string>> generateAdminApplicationCodes(
-           string projectPath,
-           string projectName,
-           CrudTemplateData crudTemplateData
-       )
+             string projectPath,
+             string projectName,
+             CrudTemplateData crudTemplateData
+         )
         {
-
             string templateDir =
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Crud}\Folders\Application";
+                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Crud, "Folders", "Application");
 
-            projectPath = projectPath.Replace("corePackages", "projects").Replace("Core.Domain\\Entities", projectName);
-
+            projectPath = projectPath.Replace("corePackages", "projects").Replace(Path.Combine("Core.Domain", "Entities"), projectName);
 
             return await generateFolderCodes(
                 templateDir,
-                outputDir: $@"{projectPath}\webAPI.Application",
+                outputDir: Path.Combine(projectPath, "webAPI.Application"),
                 crudTemplateData
             );
         }
 
-
         private async Task<ICollection<string>> generateWebApiCodes(
-            string projectPath,
-            string projectName,
-            CrudTemplateData crudTemplateData
-        )
+                string projectPath,
+                string projectName,
+                CrudTemplateData crudTemplateData
+            )
         {
             string templateDir =
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Crud}\Folders\WebAPI";
+                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Crud, "Folders", "WebAPI");
 
-            projectPath = projectPath.Replace("corePackages", "projects").Replace("Core.Domain\\Entities", projectName);
+            projectPath = projectPath.Replace("corePackages", "projects").Replace(Path.Combine("Core.Domain", "Entities"), projectName);
 
             return await generateFolderCodes(
                 templateDir,
-                outputDir: $@"{projectPath}\webAPI",
+                outputDir: Path.Combine(projectPath, "webAPI"),
                 crudTemplateData
             );
         }
 
         private async Task<ICollection<string>> generateAdminWebApiCodes(
-            string projectPath,
-            string projectName,
-            CrudTemplateData crudTemplateData
-        )
+                string projectPath,
+                string projectName,
+                CrudTemplateData crudTemplateData
+            )
         {
             string templateDir =
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Crud}\Folders\WebAPI";
+                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Crud, "Folders", "WebAPI");
 
-            projectPath = projectPath.Replace("corePackages", "projects").Replace("Core.Domain\\Entities", projectName);
+            projectPath = projectPath.Replace("corePackages", "projects").Replace(Path.Combine("Core.Domain", "Entities"), projectName);
 
             return await generateFolderCodes(
                 templateDir,
-                outputDir: $@"{projectPath}\webAPI",
+                outputDir: Path.Combine(projectPath, "webAPI"),
                 crudTemplateData
             );
         }
 
 
         private async Task<ICollection<string>> generateFolderCodes(
-            string templateDir,
-            string outputDir,
-            CrudTemplateData crudTemplateData
-        )
+               string templateDir,
+               string outputDir,
+               CrudTemplateData crudTemplateData
+           )
         {
             var templateFilePaths = DirectoryHelper
                 .GetFilesInDirectoryTree(
@@ -297,10 +290,10 @@ public class GenerateCrudCommand : IStreamRequest<GeneratedCrudResponse>
         }
 
         private async Task<ICollection<string>> generateAdminFolderCodes(
-       string templateDir,
-       string outputDir,
-       CrudTemplateData crudTemplateData
-   )
+                    string templateDir,
+                    string outputDir,
+                    CrudTemplateData crudTemplateData
+                )
         {
             var templateFilePaths = DirectoryHelper
                 .GetFilesInDirectoryTree(

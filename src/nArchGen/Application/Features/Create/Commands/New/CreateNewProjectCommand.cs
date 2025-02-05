@@ -367,11 +367,11 @@ app.UseAuthorization();"
         {
             string slnPath = Path.Combine(Environment.CurrentDirectory, projectName.ToPascalCase());
 
-        string projectSourcePath = Path.Combine(slnPath, "src", "projects", projectName.ToCamelCase() + "AdminProject");
-        string corePackagePath = Path.Combine(slnPath, "src", "corePackages");
+            string projectSourcePath = Path.Combine(slnPath, "src", "projects", projectName.ToCamelCase() + "AdminProject");
+            string corePackagePath = Path.Combine(slnPath, "src", "corePackages");
 
-        string[] dirsToDelete = new[]
-        {
+            string[] dirsToDelete = new[]
+            {
             "webAPI.Application/Features/Auth",
             "webAPI.Application/Features/OperationClaims",
             "webAPI.Application/Features/UserOperationClaims",
@@ -383,17 +383,17 @@ app.UseAuthorization();"
             "webAPI.Application/Services/UsersService"
         };
 
-        foreach (string relativePath in dirsToDelete)
-        {
-            string dirPath = Path.Combine(projectSourcePath, relativePath);
-            if (Directory.Exists(dirPath))
+            foreach (string relativePath in dirsToDelete)
             {
-                Directory.Delete(dirPath, recursive: true);
+                string dirPath = Path.Combine(projectSourcePath, relativePath);
+                if (Directory.Exists(dirPath))
+                {
+                    Directory.Delete(dirPath, recursive: true);
+                }
             }
-        }
 
-        string[] filesToDelete = new[]
-        {
+            string[] filesToDelete = new[]
+            {
             "webAPI.Application/Services/Repositories/IEmailAuthenticatorRepository.cs",
             "webAPI.Application/Services/Repositories/IOperationClaimRepository.cs",
             "webAPI.Application/Services/Repositories/IOtpAuthenticatorRepository.cs",
@@ -418,29 +418,29 @@ app.UseAuthorization();"
             "webAPI/Controllers/UsersController.cs"
         };
 
-        foreach (string relativePath in filesToDelete)
-        {
-            string filePath = Path.Combine(projectSourcePath, relativePath);
-            if (File.Exists(filePath))
+            foreach (string relativePath in filesToDelete)
             {
-                File.Delete(filePath);
+                string filePath = Path.Combine(projectSourcePath, relativePath);
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
             }
-        }
 
-        await FileHelper.RemoveLinesAsync(
-            Path.Combine(projectSourcePath, "webAPI.Application", "ApplicationServiceRegistration.cs"),
-            line => new[]
-            {
+            await FileHelper.RemoveLinesAsync(
+                Path.Combine(projectSourcePath, "webAPI.Application", "ApplicationServiceRegistration.cs"),
+                line => new[]
+                {
                 "using Application.Services.AuthService;",
                 "services.AddScopedWithManagers(typeof(IAuthService).Assembly);"
-            }.Any(line.Contains)
-        );
+                }.Any(line.Contains)
+            );
 
 
-  await FileHelper.RemoveContentAsync(
-            Path.Combine(projectSourcePath, "webAPI", "Program.cs"),
-            new[]
-            {
+            await FileHelper.RemoveContentAsync(
+                      Path.Combine(projectSourcePath, "webAPI", "Program.cs"),
+                      new[]
+                      {
                 "using Core.Security;",
                 "using Core.Security.Encryption;",
                 "using Core.Security.JWT;",
@@ -515,37 +515,37 @@ builder.Services.AddSwaggerGen(opt =>
 });",
 @"app.UseAuthentication();
 app.UseAuthorization();"
-            }
-        );
+                      }
+                  );
 
 
         }
 
-    public static async Task RemoveProjectsFromSolutionAsync(string solutionFilePath, List<string> projectGuidsToRemove)
-    {
-        string[] solutionLines = await File.ReadAllLinesAsync(solutionFilePath);
-        List<string> newSolutionLines = new List<string>();
-
-        bool shouldRemoveCurrentSection = false;
-        foreach (string line in solutionLines)
+        public static async Task RemoveProjectsFromSolutionAsync(string solutionFilePath, List<string> projectGuidsToRemove)
         {
-            if (line.StartsWith("Project("))
+            string[] solutionLines = await File.ReadAllLinesAsync(solutionFilePath);
+            List<string> newSolutionLines = new List<string>();
+
+            bool shouldRemoveCurrentSection = false;
+            foreach (string line in solutionLines)
             {
-                shouldRemoveCurrentSection = projectGuidsToRemove.Any(guid => line.Contains(guid));
+                if (line.StartsWith("Project("))
+                {
+                    shouldRemoveCurrentSection = projectGuidsToRemove.Any(guid => line.Contains(guid));
+                }
+
+                if (!shouldRemoveCurrentSection)
+                {
+                    newSolutionLines.Add(line);
+                }
+
+                if (line.StartsWith("EndProject"))
+                {
+                    shouldRemoveCurrentSection = false;
+                }
             }
 
-            if (!shouldRemoveCurrentSection)
-            {
-                newSolutionLines.Add(line);
-            }
-
-            if (line.StartsWith("EndProject"))
-            {
-                shouldRemoveCurrentSection = false;
-            }
+            await File.WriteAllLinesAsync(solutionFilePath, newSolutionLines);
         }
-
-        await File.WriteAllLinesAsync(solutionFilePath, newSolutionLines);
-    }
     }
 }
