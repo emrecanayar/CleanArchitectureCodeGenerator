@@ -37,9 +37,12 @@ public class GenerateCommandCommand : IStreamRequest<GeneratedCommandResponse>
             [EnumeratorCancellation] CancellationToken cancellationToken
         )
         {
-            await _businessRules.FileShouldNotBeExists(
-                @$"{request.ProjectPath}\Application\features\{request.FeatureName.ToPascalCase()}\Commands\{request.CommandName}\{request.CommandName}Command.cs"
-            );
+            string commandFilePath = Path.Combine(
+                 request.ProjectPath, "Application", "features", request.FeatureName.ToPascalCase(), "Commands", request.CommandName, $"{request.CommandName}Command.cs"
+             );
+
+            await _businessRules.FileShouldNotBeExists(commandFilePath);
+
 
             GeneratedCommandResponse response = new();
             List<string> newFilePaths = new();
@@ -57,6 +60,8 @@ public class GenerateCommandCommand : IStreamRequest<GeneratedCommandResponse>
                     request.CommandTemplateData
                 )
             );
+
+
             response.LastOperationMessage = "Application layer codes have been generated.";
 
             response.CurrentStatusMessage = "Adding endpoint to WebAPI...";
@@ -69,7 +74,7 @@ public class GenerateCommandCommand : IStreamRequest<GeneratedCommandResponse>
                 )
             );
             response.LastOperationMessage =
-                $"New endpoint has been add to {request.FeatureName.ToPascalCase()}Controller.";
+                $"New endpoint has been added to {request.FeatureName.ToPascalCase()}Controller.";
 
             response.CurrentStatusMessage = "Completed.";
             response.NewFilePathsResult = newFilePaths;
@@ -82,11 +87,10 @@ public class GenerateCommandCommand : IStreamRequest<GeneratedCommandResponse>
             CommandTemplateData commandTemplateData
         )
         {
-            string templateDir =
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Command}\Folders\Application";
+            string templateDir = Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Command, "Folders", "Application");
             return await generateFolderCodes(
                 templateDir,
-                outputDir: $@"{projectPath}\webAPI.Application",
+                Path.Combine(projectPath, "webAPI.Application"),
                 commandTemplateData
             );
         }
@@ -97,10 +101,9 @@ public class GenerateCommandCommand : IStreamRequest<GeneratedCommandResponse>
             CommandTemplateData commandTemplateData
         )
         {
-            string featureOperationClaimFilePath =
-                @$"{projectPath}\webAPI.Application\Features\{featureName}\Constants\{featureName}OperationClaims.cs";
+            string featureOperationClaimFilePath = Path.Combine(projectPath, "webAPI.Application", "Features", featureName, "Constants", $"{featureName}OperationClaims.cs");
             string[] commandOperationClaimPropertyTemplateCodeLines = await File.ReadAllLinesAsync(
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Command}\Lines\CommandOperationClaimProperty.cs.sbn"
+                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Command, "Lines", "CommandOperationClaimProperty.cs.sbn")
             );
             string[] commandOperationClaimPropertyCodeLines = await Task.WhenAll(
                 commandOperationClaimPropertyTemplateCodeLines.Select(
@@ -111,11 +114,7 @@ public class GenerateCommandCommand : IStreamRequest<GeneratedCommandResponse>
                 featureOperationClaimFilePath,
                 commandOperationClaimPropertyCodeLines
             );
-
-            return new[]
-            {
-                featureOperationClaimFilePath,
-            };
+            return new[] { featureOperationClaimFilePath };
         }
 
         private async Task<ICollection<string>> generateFolderCodes(
@@ -125,25 +124,21 @@ public class GenerateCommandCommand : IStreamRequest<GeneratedCommandResponse>
         )
         {
             List<string> templateFilePaths = DirectoryHelper
-                .GetFilesInDirectoryTree(
-                    templateDir,
-                    searchPattern: $"*.{_templateEngine.TemplateExtension}"
-                )
-                .ToList();
+                 .GetFilesInDirectoryTree(templateDir, searchPattern: $"*.{_templateEngine.TemplateExtension}")
+                 .ToList();
             Dictionary<string, string> replacePathVariable =
                 new()
                 {
                     { "FEATURE", "{{ feature_name | string.pascalcase }}" },
                     { "COMMAND", "{{ command_name | string.pascalcase }}" }
                 };
-            ICollection<string> newRenderedFilePaths = await _templateEngine.RenderFileAsync(
+            return await _templateEngine.RenderFileAsync(
                 templateFilePaths,
                 templateDir,
                 replacePathVariable,
                 outputDir,
                 commandTemplateData
             );
-            return newRenderedFilePaths;
         }
 
         private async Task<ICollection<string>> injectWebApiEndpoint(
@@ -152,10 +147,9 @@ public class GenerateCommandCommand : IStreamRequest<GeneratedCommandResponse>
             CommandTemplateData commandTemplateData
         )
         {
-            string controllerFilePath =
-                @$"{projectPath}\WebAPI\Controllers\{featureName}Controller.cs";
+            string controllerFilePath = Path.Combine(projectPath, "WebAPI", "Controllers", $"{featureName}Controller.cs");
             string[] controllerEndPointMethodTemplateCodeLines = await File.ReadAllLinesAsync(
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Command}\Lines\ControllerEndPointMethod.cs.sbn"
+                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Command, "Lines", "ControllerEndPointMethod.cs.sbn")
             );
             string[] controllerEndPointMethodRenderedCodeLines = await Task.WhenAll(
                 controllerEndPointMethodTemplateCodeLines.Select(
@@ -170,7 +164,7 @@ public class GenerateCommandCommand : IStreamRequest<GeneratedCommandResponse>
             );
 
             string[] commandUsingNameSpaceTemplateCodeLines = await File.ReadAllLinesAsync(
-                @$"{DirectoryHelper.AssemblyDirectory}\{Templates.Paths.Command}\Lines\CommandUsingNameSpaces.cs.sbn"
+                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Command, "Lines", "CommandUsingNameSpaces.cs.sbn")
             );
             string[] commandUsingNameSpaceRenderedCodeLines = await Task.WhenAll(
                 commandUsingNameSpaceTemplateCodeLines.Select(
