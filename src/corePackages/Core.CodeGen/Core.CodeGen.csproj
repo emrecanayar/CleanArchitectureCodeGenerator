@@ -10,6 +10,8 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
     <PackageReference Include="PluralizeService.Core" Version="1.2.21147.2" />
     <PackageReference Include="Scriban" Version="5.5.2" />
+	  <PackageReference Include="Spectre.Console" Version="0.46.0" />
+	  <PackageReference Include="Spectre.Console.Cli" Version="0.46.0" />
   </ItemGroup>
 
   <ItemGroup>

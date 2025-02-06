@@ -13,6 +13,7 @@ namespace Application.Features.{{ entity.name | string.pascalcase | string.plura
 
 public class GetToList{{ entity.name | string.pascalcase }}Query : IRequest<CustomResponseDto<List<GetToList{{ entity.name | string.pascalcase }}Response>>>{{ if is_secured_operation_used }}, ISecuredRequest{{ end }}
 {
+    {{ if is_secured_operation_used }}
 
     public string[] Roles => new[] { Admin, Read };{{ end }}
 

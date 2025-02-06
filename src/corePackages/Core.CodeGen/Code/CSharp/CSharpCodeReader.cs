@@ -1,4 +1,5 @@
 ﻿using Core.CodeGen.Code.CSharp.ValueObjects;
+using Spectre.Console;
 using System.Text.RegularExpressions;
 
 namespace Core.CodeGen.Code.CSharp;
@@ -48,42 +49,72 @@ public static class CSharpCodeReader
     {
         string fileContent = await System.IO.File.ReadAllTextAsync(filePath);
 
-        Regex propertyRegex = new Regex(
-            @"(\bpublic\b|\bprotected\b|\binternal\b|\bprivate\b)\s+(static\s+)?((?:[\w]+)\??)\s+(\w+)\s*{",
-            RegexOptions.Compiled | RegexOptions.Singleline);
+        Regex propertyRegex = new Regex(@"(\bpublic\b|\bprotected\b|\binternal\b|\bprivate\b)\s+(static\s+)?([\w\?]+)\s+(\w+)\s*{", RegexOptions.Compiled | RegexOptions.Singleline);
 
-        Regex builtInTypeRegex = new Regex(
-            @"^(bool|byte|sbyte|char|decimal|double|float|int|uint|long|ulong|object|short|ushort|string|DateTime|Guid)$",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        Regex builtInTypeRegex = new Regex(@"^(bool\??|byte\??|sbyte\??|char\??|decimal\??|double\??|float\??|int\??|uint\??|long\??|ulong\??|object\??|short\??|ushort\??|string\??|DateTime\??|Guid\??)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         List<PropertyInfo> result = new List<PropertyInfo>();
+
+        HashSet<string> modelClassNames = GetModelClassNames(projectPath);
 
         foreach (Match match in propertyRegex.Matches(fileContent))
         {
             string accessModifier = match.Groups[1].Value;
-            string type = match.Groups[3].Value;
-            string name = match.Groups[4].Value;
+            string typeName = match.Groups[3].Value;
+            string propertyName = match.Groups[4].Value;
 
-            if (!builtInTypeRegex.IsMatch(type))
+            //string message = $"accessModifier:{accessModifier}, typeName:{typeName}, propertyName:{propertyName} ";
+
+            //AnsiConsole.MarkupLine(message);
+
+            if (builtInTypeRegex.IsMatch(typeName))
             {
-                continue; // Yerleşik tip değilse, bu özelliği atla
+                AddProperty(result, accessModifier, typeName, propertyName);
+                continue;
             }
-
-            PropertyInfo propertyInfo = new PropertyInfo
+            if (modelClassNames.Contains(typeName))
             {
-                AccessModifier = accessModifier,
-                Type = type,
-                Name = name,
-                NameSpace = null // Örnek sınırları nedeniyle namespace bilgisi eklenmemiştir
-            };
-
-            result.Add(propertyInfo);
+                continue;
+            }
+            AddProperty(result, accessModifier, typeName, propertyName);
         }
 
         return result;
     }
+    static void AddProperty(List<PropertyInfo> list, string accessModifier, string typeName, string propertyName)
+    {
+        list.Add(new PropertyInfo
+        {
+            AccessModifier = accessModifier,
+            Type = typeName,
+            Name = propertyName,
+            NameSpace = null
+        });
+    }
 
+    static HashSet<string> GetModelClassNames(string directoryPath)
+    {
+        HashSet<string> classNames = new HashSet<string>();
 
+        if (Directory.Exists(directoryPath))
+        {
+            var files = Directory.GetFiles(directoryPath, "*.cs", SearchOption.AllDirectories);
+            foreach (var file in files)
+            {
+                var lines = System.IO.File.ReadAllLines(file);
+                foreach (var line in lines)
+                {
+                    var match = Regex.Match(line, @"\bclass\s+(\w+)");
+                    if (match.Success)
+                    {
+                        classNames.Add(match.Groups[1].Value);
+                    }
+                }
+            }
+        }
+
+        return classNames;
+    }
 
     public static async Task<ICollection<string>> ReadUsingNameSpacesAsync(string filePath)
     {
