@@ -38,7 +38,7 @@ public class GenerateCrudCommand : IStreamRequest<GeneratedCrudResponse>
         {
             bool isAdminProject = request.ProjectName.Contains("Admin");
 
-            await _businessRules.EntityClassShouldBeInhreitEntityBaseClass(
+            await _businessRules.EntityClassShouldBeInheritEntityBaseClass(
                 request.ProjectPath,
                 request.CrudTemplateData.Entity.Name
             );
@@ -71,6 +71,7 @@ public class GenerateCrudCommand : IStreamRequest<GeneratedCrudResponse>
                 newFilePaths.AddRange(
                     await generateApplicationCodes(request.ProjectPath, request.ProjectName, request.CrudTemplateData)
                 );
+                
                 response.LastOperationMessage = "Application layer codes have been generated.";
                 yield return response;
 
@@ -194,16 +195,32 @@ public class GenerateCrudCommand : IStreamRequest<GeneratedCrudResponse>
           CrudTemplateData crudTemplateData
       )
         {
-            string templateDir =
-                Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Crud, "Folders", "Application");
+            try
+            {
+                  string templateDir = Path.Combine(DirectoryHelper.AssemblyDirectory, Templates.Paths.Crud, "Folders", "Application");
 
-            projectPath = projectPath.Replace("corePackages", "projects").Replace(Path.Combine("Core.Domain", "Entities"), projectName);
+            projectPath = projectPath.Replace("corePackages", "projects")
+                                     .Replace(Path.Combine("Core.Domain", "Entities"), projectName);
 
             return await generateFolderCodes(
                 templateDir,
                 outputDir: Path.Combine(projectPath, "webAPI.Application"),
                 crudTemplateData
             );
+            }
+            catch (Exception exception)
+            {
+                System.Console.WriteLine("Error: " + exception.Message);
+                System.Console.WriteLine("Error Stack Trace: " + exception.StackTrace);
+                System.Console.WriteLine("Error Inner Exception: " + exception.InnerException);
+                System.Console.WriteLine("Error Source: " + exception.Source);
+                System.Console.WriteLine("Error Target Site: " + exception.TargetSite);
+                System.Console.WriteLine("Error Data: " + exception.Data);
+                System.Console.WriteLine("Error Help Link: " + exception.HelpLink); 
+                System.Console.WriteLine("Error HResult: " + exception.HResult);
+                throw;
+            }
+          
         }
 
         private async Task<ICollection<string>> generateAdminApplicationCodes(
@@ -267,12 +284,9 @@ public class GenerateCrudCommand : IStreamRequest<GeneratedCrudResponse>
                CrudTemplateData crudTemplateData
            )
         {
-            var templateFilePaths = DirectoryHelper
-                .GetFilesInDirectoryTree(
-                    templateDir,
-                    searchPattern: $"*.{_templateEngine.TemplateExtension}"
-                )
-                .ToList();
+
+            var templateFilePaths = Directory.GetFiles(templateDir, "*.sbn", SearchOption.AllDirectories).ToList();
+
             Dictionary<string, string> replacePathVariable =
                 new()
                 {

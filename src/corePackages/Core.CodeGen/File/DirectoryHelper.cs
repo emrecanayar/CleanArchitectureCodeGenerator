@@ -4,16 +4,7 @@ namespace Core.CodeGen.File;
 
 public static class DirectoryHelper
 {
-    public static string AssemblyDirectory
-    {
-        get
-        {
-            string codeBase = Assembly.GetExecutingAssembly().Location;
-            UriBuilder uri = new(codeBase);
-            string path = Uri.UnescapeDataString(uri.Path);
-            return Path.GetDirectoryName(path)!;
-        }
-    }
+      public static string AssemblyDirectory => AppContext.BaseDirectory;
 
     public static ICollection<string> GetFilesInDirectoryTree(string root, string searchPattern)
     {
