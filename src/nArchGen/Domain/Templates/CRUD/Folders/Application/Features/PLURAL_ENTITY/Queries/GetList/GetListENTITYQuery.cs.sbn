@@ -41,8 +41,7 @@ public class GetList{{ entity.name | string.pascalcase }}Query : IRequest<Custom
             IPaginate<{{ entity.name | string.pascalcase }}> {{ entity.name | string.camelcase | string.plural }} = await _{{ entity.name | string.camelcase }}Repository.GetListAsync(
                 index: request.PageRequest.PageIndex,
                 size: request.PageRequest.PageSize, 
-                cancellationToken: cancellationToken
-            );
+                cancellationToken: cancellationToken);
 
             GetListResponse<GetList{{ entity.name | string.pascalcase }}ListItemDto> response = _mapper.Map<GetListResponse<GetList{{ entity.name | string.pascalcase }}ListItemDto>>({{ entity.name | string.camelcase | string.plural }});
              return CustomResponseDto<GetListResponse<GetList{{ entity.name | string.pascalcase }}ListItemDto>>.Success((int)HttpStatusCode.OK, response, true);

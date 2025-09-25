@@ -21,7 +21,7 @@ public class {{ entity.name | string.pascalcase | string.plural }}Controller : B
     {
         CustomResponseDto<Created{{ entity.name | string.pascalcase }}Response> response = await Mediator.Send(create{{ entity.name | string.pascalcase }}Command);
 
-        return Created(uri: "", response);
+        return Created(uri: string.Empty, response);
     }
 
     [HttpPut]
