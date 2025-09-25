@@ -1,9 +1,9 @@
-﻿using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Rules;
+﻿using System.Linq.Expressions;
+using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Rules;
 using Application.Services.Repositories;
-using Core.Persistence.Paging;
 using Core.Domain.Entities;
+using Core.Persistence.Paging;
 using Microsoft.EntityFrameworkCore.Query;
-using System.Linq.Expressions;
 
 namespace Application.Services.{{ entity.name | string.pascalcase | string.plural }};
 
@@ -23,8 +23,7 @@ public class {{ entity.name | string.pascalcase | string.plural }}Manager : I{{ 
         Func<IQueryable<{{ entity.name | string.camelcase | string.pascalcase }}>, IIncludableQueryable<{{ entity.name | string.camelcase | string.pascalcase }}, object>>? include = null,
         bool withDeleted = false,
         bool enableTracking = true,
-        CancellationToken cancellationToken = default
-    )
+        CancellationToken cancellationToken = default)
     {
         {{ entity.name | string.camelcase | string.pascalcase }}? {{ entity.name | string.camelcase }} = await _{{ entity.name | string.camelcase }}Repository.GetAsync(predicate, include, withDeleted, enableTracking, cancellationToken);
         return {{ entity.name | string.camelcase }};
@@ -38,8 +37,7 @@ public class {{ entity.name | string.pascalcase | string.plural }}Manager : I{{ 
         int size = 10,
         bool withDeleted = false,
         bool enableTracking = true,
-        CancellationToken cancellationToken = default
-    )
+        CancellationToken cancellationToken = default)
     {
         IPaginate<{{ entity.name | string.camelcase | string.pascalcase }}> {{ entity.name | string.camelcase }}List = await _{{ entity.name | string.camelcase }}Repository.GetListAsync(
             predicate,
@@ -49,8 +47,7 @@ public class {{ entity.name | string.pascalcase | string.plural }}Manager : I{{ 
             size,
             withDeleted,
             enableTracking,
-            cancellationToken
-        );
+            cancellationToken);
         return {{ entity.name | string.camelcase }}List;
     }
 

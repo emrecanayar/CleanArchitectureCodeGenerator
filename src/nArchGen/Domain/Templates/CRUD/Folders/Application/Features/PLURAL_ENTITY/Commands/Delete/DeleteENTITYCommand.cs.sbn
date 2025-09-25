@@ -31,8 +31,7 @@ public class Delete{{ entity.name | string.pascalcase }}Command : IRequest<Custo
         private readonly I{{ entity.name | string.pascalcase }}Repository _{{ entity.name | string.camelcase }}Repository;
         private readonly {{ entity.name | string.pascalcase }}BusinessRules _{{ entity.name | string.camelcase }}BusinessRules;
 
-        public Delete{{ entity.name | string.pascalcase }}CommandHandler(IMapper mapper, I{{ entity.name | string.pascalcase }}Repository {{ entity.name | string.camelcase }}Repository,
-                                         {{ entity.name | string.pascalcase }}BusinessRules {{ entity.name | string.camelcase }}BusinessRules)
+        public Delete{{ entity.name | string.pascalcase }}CommandHandler(IMapper mapper, I{{ entity.name | string.pascalcase }}Repository {{ entity.name | string.camelcase }}Repository, {{ entity.name | string.pascalcase }}BusinessRules {{ entity.name | string.camelcase }}BusinessRules)
         {
             _mapper = mapper;
             _{{ entity.name | string.camelcase }}Repository = {{ entity.name | string.camelcase }}Repository;

@@ -2,8 +2,8 @@
 using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Commands.Delete;
 using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Commands.Update;
 using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetById;
-using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetToList;
 using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetList;
+using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetToList;
 using AutoMapper;
 using Core.Application.Responses;
 using Core.Domain.Entities;

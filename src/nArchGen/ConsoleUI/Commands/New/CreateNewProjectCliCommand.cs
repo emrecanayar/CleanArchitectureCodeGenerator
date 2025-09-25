@@ -23,6 +23,7 @@ public partial class CreateNewProjectCliCommand : AsyncCommand<CreateNewProjectC
         CreateNewProjectCommand request =
             new(
                 projectName: settings.ProjectName!,
+                gitBranchName: settings.GitBranchName!,
                 isThereSecurityMechanism: settings.IsThereSecurityMechanism,
                 isThereAdminProject: settings.IsThereAdminProject
 

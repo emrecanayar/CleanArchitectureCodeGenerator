@@ -9,17 +9,20 @@ namespace Application.Features.Create.Commands.New;
 public class CreateNewProjectCommand : IStreamRequest<CreatedNewProjectResponse>
 {
     public string ProjectName { get; set; }
+    public string? GitBranchName { get; set; }
     public bool IsThereSecurityMechanism { get; set; } = true;
     public bool IsThereAdminProject { get; set; } = true;
 
     public CreateNewProjectCommand()
     {
         ProjectName = string.Empty;
+        GitBranchName = "main"; // Default branch name
     }
 
-    public CreateNewProjectCommand(string projectName, bool isThereSecurityMechanism, bool isThereAdminProject)
+    public CreateNewProjectCommand(string projectName, string gitBranchName, bool isThereSecurityMechanism, bool isThereAdminProject)
     {
         ProjectName = projectName;
+        GitBranchName = gitBranchName ?? "main"; // Default branch name
         IsThereSecurityMechanism = isThereSecurityMechanism;
         IsThereAdminProject = isThereAdminProject;
     }
@@ -38,7 +41,7 @@ public class CreateNewProjectCommand : IStreamRequest<CreatedNewProjectResponse>
             response.CurrentStatusMessage = "Cloning starter project and core packages...";
             yield return response;
             response.OutputMessage = null;
-            await cloneCorePackagesAndStarterProject(request.ProjectName);
+            await cloneCorePackagesAndStarterProject(request.ProjectName, request.GitBranchName);
             response.LastOperationMessage =
                 "Starter project has been cloned from 'https://github.com/emrecanayar/CleanArchitectureTemplate.git'.";
 
@@ -64,9 +67,6 @@ public class CreateNewProjectCommand : IStreamRequest<CreatedNewProjectResponse>
                 }
             }
 
-
-
-
             response.LastOperationMessage =
                 $"Project has been prepared with {request.ProjectName.ToPascalCase()}.";
 
@@ -89,9 +89,9 @@ public class CreateNewProjectCommand : IStreamRequest<CreatedNewProjectResponse>
             yield return response;
         }
 
-        private async Task cloneCorePackagesAndStarterProject(string projectName) =>
+        private async Task cloneCorePackagesAndStarterProject(string projectName, string brancName) =>
             await GitCommandHelper.RunAsync(
-                $"clone https://github.com/emrecanayar/CleanArchitectureTemplate.git ./{projectName}"
+                $"clone --branch {brancName} https://github.com/emrecanayar/CleanArchitectureTemplate.git ./{projectName}"
             );
 
         private async Task renameProject(string projectName)
@@ -193,7 +193,6 @@ public class CreateNewProjectCommand : IStreamRequest<CreatedNewProjectResponse>
                 fileContent = fileContent.Replace(search, projectName);
                 await File.WriteAllTextAsync(path, fileContent);
             }
-
 
         }
         private static async Task deleteForAdminProject(string projectName)
@@ -427,7 +426,6 @@ app.UseAuthorization();"
                       }
                   ).Any(line.Contains)
           );
-
 
             await FileHelper.RemoveContentAsync(
                 filePath: $"{projectSourcePath}/webAPI/Program.cs",

@@ -2,16 +2,17 @@
 using Core.Persistence.Configurations.Base;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 namespace Persistence.EntityConfigurations;
 
 public class {{ entity.name | string.pascalcase }}Configuration : BaseConfiguration<{{ entity.name | string.pascalcase }},{{ entity.id_type }}>
 {
     public override void Configure(EntityTypeBuilder<{{ entity.name | string.pascalcase }}> builder)
     {
-    base.Configure(builder);
-    builder.ToTable("{{ entity.name | string.pascalcase | string.plural }}");
+        base.Configure(builder);
+        builder.ToTable("{{ entity.name | string.pascalcase | string.plural }}");
     {{ for propertyItem in entity.properties }}
-    builder.Property({{ entity.name | string.abbreviation }} => {{ entity.name | string.abbreviation }}.{{ propertyItem.name }}).IsRequired(true).HasColumnName("{{ propertyItem.name }}");
+        builder.Property({{ entity.name | string.abbreviation }} => {{ entity.name | string.abbreviation }}.{{ propertyItem.name }}).IsRequired().HasColumnName("{{ propertyItem.name }}");
     {{ end }}   
     }
 }

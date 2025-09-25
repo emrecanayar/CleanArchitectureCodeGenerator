@@ -9,13 +9,14 @@ public partial class CreateNewProjectCliCommand
     {
         [CommandArgument(position: 0, template: "[ProjectName]")]
         public string? ProjectName { get; set; }
+        [CommandArgument(position: 1, template: "[GitBranchName]")]
+        public string? GitBranchName { get; set; }
 
         [CommandOption("--no-security")]
         public bool IsThereSecurityMechanism { get; set; }
 
         [CommandOption("--no-admin")]
         public bool IsThereAdminProject { get; set; }
-
 
         public void CheckProjectNameArgument()
         {
@@ -27,7 +28,6 @@ public partial class CreateNewProjectCliCommand
             if (string.IsNullOrWhiteSpace(ProjectName))
                 throw new ArgumentNullException(nameof(ProjectName));
         }
-
         public void CheckIsThereSecurityMechanismArgument()
         {
             if (IsThereSecurityMechanism)

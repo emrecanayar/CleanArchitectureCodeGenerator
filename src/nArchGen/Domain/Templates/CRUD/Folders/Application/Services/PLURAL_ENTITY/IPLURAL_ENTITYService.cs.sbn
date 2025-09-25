@@ -12,8 +12,8 @@ public interface I{{ entity.name | string.pascalcase | string.plural }}Service
         Func<IQueryable<{{ entity.name | string.pascalcase }}>, IIncludableQueryable<{{ entity.name | string.pascalcase }}, object>>? include = null,
         bool withDeleted = false,
         bool enableTracking = true,
-        CancellationToken cancellationToken = default
-    );
+        CancellationToken cancellationToken = default);
+
     Task<IPaginate<{{ entity.name | string.pascalcase }}>?> GetListAsync(
         Expression<Func<{{ entity.name | string.pascalcase }}, bool>>? predicate = null,
         Func<IQueryable<{{ entity.name | string.pascalcase }}>, IOrderedQueryable<{{ entity.name | string.pascalcase }}>>? orderBy = null,
@@ -22,9 +22,11 @@ public interface I{{ entity.name | string.pascalcase | string.plural }}Service
         int size = 10,
         bool withDeleted = false,
         bool enableTracking = true,
-        CancellationToken cancellationToken = default
-    );
+        CancellationToken cancellationToken = default);
+
     Task<{{ entity.name | string.pascalcase }}> AddAsync({{ entity.name | string.pascalcase }} {{ entity.name | string.camelcase }});
+   
     Task<{{ entity.name | string.pascalcase }}> UpdateAsync({{ entity.name | string.pascalcase }} {{ entity.name | string.camelcase }});
+    
     Task<{{ entity.name | string.pascalcase }}> DeleteAsync({{ entity.name | string.pascalcase }} {{ entity.name | string.camelcase }}, bool permanent = false);
 }
