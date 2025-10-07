@@ -29,7 +29,7 @@ public class {{ entity.name | string.pascalcase | string.plural }}Manager : I{{ 
         return {{ entity.name | string.camelcase }};
     }
 
-    public async Task<IPaginate<{{ entity.name | string.camelcase | string.pascalcase }}>?> GetListAsync(
+    public async Task<IPaginate<{{ entity.name | string.camelcase | string.pascalcase }}>?> GetPagedListAsync(
         Expression<Func<{{ entity.name | string.camelcase | string.pascalcase }}, bool>>? predicate = null,
         Func<IQueryable<{{ entity.name | string.camelcase | string.pascalcase }}>, IOrderedQueryable<{{ entity.name | string.camelcase | string.pascalcase }}>>? orderBy = null,
         Func<IQueryable<{{ entity.name | string.camelcase | string.pascalcase }}>, IIncludableQueryable<{{ entity.name | string.camelcase | string.pascalcase }}, object>>? include = null,
@@ -39,12 +39,30 @@ public class {{ entity.name | string.pascalcase | string.plural }}Manager : I{{ 
         bool enableTracking = true,
         CancellationToken cancellationToken = default)
     {
-        IPaginate<{{ entity.name | string.camelcase | string.pascalcase }}> {{ entity.name | string.camelcase }}List = await _{{ entity.name | string.camelcase }}Repository.GetListAsync(
+        IPaginate<{{ entity.name | string.camelcase | string.pascalcase }}> {{ entity.name | string.camelcase }}List = await _{{ entity.name | string.camelcase }}Repository.GetPagedListAsync(
             predicate,
             orderBy,
             include,
             index,
             size,
+            withDeleted,
+            enableTracking,
+            cancellationToken);
+        return {{ entity.name | string.camelcase }}List;
+    }
+
+    public async Task<IList<{{ entity.name | string.camelcase | string.pascalcase }}>?> GetToListAsync(
+        Expression<Func<{{ entity.name | string.camelcase | string.pascalcase }}, bool>>? predicate = null,
+        Func<IQueryable<{{ entity.name | string.camelcase | string.pascalcase }}>, IOrderedQueryable<{{ entity.name | string.camelcase | string.pascalcase }}>>? orderBy = null,
+        Func<IQueryable<{{ entity.name | string.camelcase | string.pascalcase }}>, IIncludableQueryable<{{ entity.name | string.camelcase | string.pascalcase }}, object>>? include = null,
+        bool withDeleted = false,
+        bool enableTracking = true,
+        CancellationToken cancellationToken = default)
+    {
+        IList<{{ entity.name | string.camelcase | string.pascalcase }}> {{ entity.name | string.camelcase }}List = await _{{ entity.name | string.camelcase }}Repository.GetToListAsync(
+            predicate,
+            orderBy,
+            include,
             withDeleted,
             enableTracking,
             cancellationToken);

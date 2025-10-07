@@ -2,7 +2,7 @@
 using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Commands.Delete;
 using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Commands.Update;
 using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetById;
-using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetList;
+using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetPagedList;
 using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetToList;
 using AutoMapper;
 using Core.Application.Responses;
@@ -23,7 +23,7 @@ public class MappingProfiles : Profile
         CreateMap<{{ entity.name | string.pascalcase }}, Deleted{{ entity.name | string.pascalcase }}Response>().ReverseMap();
         CreateMap<{{ entity.name | string.pascalcase }}, GetById{{ entity.name | string.pascalcase }}Response>().ReverseMap();
         CreateMap<{{ entity.name | string.pascalcase }}, GetToList{{ entity.name | string.pascalcase }}Response>().ReverseMap();
-        CreateMap<{{ entity.name | string.pascalcase }}, GetList{{ entity.name | string.pascalcase }}ListItemDto>().ReverseMap();
-        CreateMap<IPaginate<{{ entity.name | string.pascalcase }}>, GetListResponse<GetList{{ entity.name | string.pascalcase }}ListItemDto>>().ReverseMap();
+        CreateMap<{{ entity.name | string.pascalcase }}, GetPagedList{{ entity.name | string.pascalcase }}ListItemDto>().ReverseMap();
+        CreateMap<IPaginate<{{ entity.name | string.pascalcase }}>, GetPagedListResponse<GetPagedList{{ entity.name | string.pascalcase }}ListItemDto>>().ReverseMap();
     }
 }

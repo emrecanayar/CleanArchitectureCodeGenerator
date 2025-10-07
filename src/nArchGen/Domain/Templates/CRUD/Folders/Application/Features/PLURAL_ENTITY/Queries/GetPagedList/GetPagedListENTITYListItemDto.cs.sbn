@@ -1,9 +1,9 @@
 ﻿using Core.Application.Dtos;{{ for propertyItem in entity.properties }}{{ if (propertyItem.name_space) }}
 using {{ propertyItem.name_space }};{{ end }}{{ end }}
 
-namespace Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetList;
+namespace Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetPagedList;
 
-public class GetList{{ entity.name | string.pascalcase }}ListItemDto : IDto
+public class GetPagedList{{ entity.name | string.pascalcase }}ListItemDto : IDto
 {
     public {{ entity.id_type }} Id { get; set; }{{ for propertyItem in entity.properties }}
 

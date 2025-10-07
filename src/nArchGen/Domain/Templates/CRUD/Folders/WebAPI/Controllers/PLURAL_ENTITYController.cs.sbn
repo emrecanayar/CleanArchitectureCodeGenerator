@@ -3,7 +3,7 @@ using Application.Features.{{ entity.name | string.pascalcase | string.plural }}
 using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Commands.Update;
 using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetById;
 using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetToList;
-using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetList;
+using Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetPagedList;
 using Core.Application.Requests;
 using Core.Application.Responses;
 using Microsoft.AspNetCore.Mvc;
@@ -54,11 +54,11 @@ public class {{ entity.name | string.pascalcase | string.plural }}Controller : B
         return Ok(response);
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetList([FromQuery] PageRequest pageRequest)
+    [HttpGet("GetPagedList")]
+    public async Task<IActionResult> GetPagedList([FromQuery] PageRequest pageRequest)
     {
-        GetList{{ entity.name | string.pascalcase }}Query getList{{ entity.name | string.pascalcase }}Query = new() { PageRequest = pageRequest };
-       CustomResponseDto<GetListResponse<GetList{{ entity.name | string.pascalcase }}ListItemDto>> response = await Mediator.Send(getList{{ entity.name | string.pascalcase }}Query);
+        GetPagedList{{ entity.name | string.pascalcase }}Query getList{{ entity.name | string.pascalcase }}Query = new() { PageRequest = pageRequest };
+        CustomResponseDto<GetPagedListResponse<GetPagedList{{ entity.name | string.pascalcase }}ListItemDto>> response = await Mediator.Send(getList{{ entity.name | string.pascalcase }}Query);
         return Ok(response);
     }
 }

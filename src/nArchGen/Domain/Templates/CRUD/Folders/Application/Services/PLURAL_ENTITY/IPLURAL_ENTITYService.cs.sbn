@@ -14,12 +14,20 @@ public interface I{{ entity.name | string.pascalcase | string.plural }}Service
         bool enableTracking = true,
         CancellationToken cancellationToken = default);
 
-    Task<IPaginate<{{ entity.name | string.pascalcase }}>?> GetListAsync(
+    Task<IPaginate<{{ entity.name | string.pascalcase }}>?> GetPagedListAsync(
         Expression<Func<{{ entity.name | string.pascalcase }}, bool>>? predicate = null,
         Func<IQueryable<{{ entity.name | string.pascalcase }}>, IOrderedQueryable<{{ entity.name | string.pascalcase }}>>? orderBy = null,
         Func<IQueryable<{{ entity.name | string.pascalcase }}>, IIncludableQueryable<{{ entity.name | string.pascalcase }}, object>>? include = null,
         int index = 0,
         int size = 10,
+        bool withDeleted = false,
+        bool enableTracking = true,
+        CancellationToken cancellationToken = default);
+        
+    Task<IList<{{ entity.name | string.pascalcase }}>?> GetToListAsync(
+        Expression<Func<{{ entity.name | string.pascalcase }}, bool>>? predicate = null,
+        Func<IQueryable<{{ entity.name | string.pascalcase }}>, IOrderedQueryable<{{ entity.name | string.pascalcase }}>>? orderBy = null,
+        Func<IQueryable<{{ entity.name | string.pascalcase }}>, IIncludableQueryable<{{ entity.name | string.pascalcase }}, object>>? include = null,
         bool withDeleted = false,
         bool enableTracking = true,
         CancellationToken cancellationToken = default);
