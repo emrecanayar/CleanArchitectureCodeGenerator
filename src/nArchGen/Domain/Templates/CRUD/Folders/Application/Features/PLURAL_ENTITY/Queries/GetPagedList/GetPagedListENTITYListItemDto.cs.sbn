@@ -1,4 +1,6 @@
-﻿using Core.Application.Dtos;{{ for propertyItem in entity.properties }}{{ if (propertyItem.name_space) }}
+﻿using Core.Application.Dtos;
+using Core.Domain.ComplexTypes.Enums;
+{{ for propertyItem in entity.properties }}{{ if (propertyItem.name_space) }}
 using {{ propertyItem.name_space }};{{ end }}{{ end }}
 
 namespace Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Queries.GetPagedList;

@@ -1,4 +1,6 @@
-﻿using Core.Application.Responses;{{ for propertyItem in entity.properties }}{{ if (propertyItem.name_space) }}
+﻿using Core.Application.Responses;
+using Core.Domain.ComplexTypes.Enums;
+{{ for propertyItem in entity.properties }}{{ if (propertyItem.name_space) }}
 using {{ propertyItem.name_space }};{{ end }}{{ end }}
 
 namespace Application.Features.{{ entity.name | string.pascalcase | string.plural }}.Commands.Update;
@@ -6,5 +8,6 @@ namespace Application.Features.{{ entity.name | string.pascalcase | string.plura
 public class Updated{{ entity.name | string.pascalcase }}Response : IResponse
 {
     public {{ entity.id_type }} Id { get; set; }{{ for propertyItem in entity.properties }}
+
     public {{ propertyItem.type }} {{ propertyItem.name | string.pascalcase }} { get; set; }{{ end }}
 }

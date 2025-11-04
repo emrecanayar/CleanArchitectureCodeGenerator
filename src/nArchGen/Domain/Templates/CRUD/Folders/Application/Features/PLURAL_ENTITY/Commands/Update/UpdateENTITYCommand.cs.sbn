@@ -3,6 +3,7 @@
 using Application.Services.Repositories;
 using AutoMapper;
 using Core.Application.ResponseTypes.Concrete;
+using Core.Domain.ComplexTypes.Enums;
 using System.Net;
 using Core.Domain.Entities;{{ if is_secured_operation_used }}
 using Core.Application.Pipelines.Authorization;{{ end }}{{ if is_caching_used }}
